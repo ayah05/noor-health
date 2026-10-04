@@ -1,0 +1,119 @@
+========================================================================
+NOOR HEALTH - BASELINE EVALUATION
+========================================================================
+
+Model:   Qwen/Qwen3-0.6B
+Samples: 700
+
+Valid JSON                       687 / 700    98.14%
+Schema valid                     571 / 700    81.57%
+Exact structured match             4 / 700     0.57%
+Chief complaint accuracy         100 / 700    14.29%
+Symptom extraction accuracy       54 / 700     7.71%
+Symptom status accuracy           54 / 700     7.71%
+Duration accuracy                 30 / 700     4.29%
+Medication accuracy              273 / 700    39.00%
+Allergy accuracy                 368 / 700    52.57%
+Missing information accuracy     192 / 700    27.43%
+
+========================================================================
+BY LANGUAGE
+========================================================================
+
+English
+------------------------------------------------------------------------
+Samples: 100
+Valid JSON                       100 / 100   100.00%
+Schema valid                      79 / 100    79.00%
+Exact structured match             4 / 100     4.00%
+Chief complaint accuracy          80 / 100    80.00%
+Symptom extraction accuracy       39 / 100    39.00%
+Symptom status accuracy           39 / 100    39.00%
+Duration accuracy                 25 / 100    25.00%
+Medication accuracy               57 / 100    57.00%
+Allergy accuracy                  70 / 100    70.00%
+Missing information accuracy      28 / 100    28.00%
+
+German
+------------------------------------------------------------------------
+Samples: 100
+Valid JSON                        99 / 100    99.00%
+Schema valid                      84 / 100    84.00%
+Exact structured match             0 / 100     0.00%
+Chief complaint accuracy           0 / 100     0.00%
+Symptom extraction accuracy        0 / 100     0.00%
+Symptom status accuracy            0 / 100     0.00%
+Duration accuracy                  0 / 100     0.00%
+Medication accuracy               56 / 100    56.00%
+Allergy accuracy                  83 / 100    83.00%
+Missing information accuracy      28 / 100    28.00%
+
+Arabic
+------------------------------------------------------------------------
+Samples: 100
+Valid JSON                        99 / 100    99.00%
+Schema valid                      95 / 100    95.00%
+Exact structured match             0 / 100     0.00%
+Chief complaint accuracy           5 / 100     5.00%
+Symptom extraction accuracy        4 / 100     4.00%
+Symptom status accuracy            4 / 100     4.00%
+Duration accuracy                  3 / 100     3.00%
+Medication accuracy               30 / 100    30.00%
+Allergy accuracy                  38 / 100    38.00%
+Missing information accuracy      28 / 100    28.00%
+
+French
+------------------------------------------------------------------------
+Samples: 100
+Valid JSON                        99 / 100    99.00%
+Schema valid                      85 / 100    85.00%
+Exact structured match             0 / 100     0.00%
+Chief complaint accuracy          13 / 100    13.00%
+Symptom extraction accuracy        5 / 100     5.00%
+Symptom status accuracy            5 / 100     5.00%
+Duration accuracy                  2 / 100     2.00%
+Medication accuracy               33 / 100    33.00%
+Allergy accuracy                  46 / 100    46.00%
+Missing information accuracy      28 / 100    28.00%
+
+Spanish
+------------------------------------------------------------------------
+Samples: 100
+Valid JSON                       100 / 100   100.00%
+Schema valid                      88 / 100    88.00%
+Exact structured match             0 / 100     0.00%
+Chief complaint accuracy           2 / 100     2.00%
+Symptom extraction accuracy        4 / 100     4.00%
+Symptom status accuracy            4 / 100     4.00%
+Duration accuracy                  0 / 100     0.00%
+Medication accuracy               38 / 100    38.00%
+Allergy accuracy                  52 / 100    52.00%
+Missing information accuracy      28 / 100    28.00%
+
+Hindi
+------------------------------------------------------------------------
+Samples: 100
+Valid JSON                        97 / 100    97.00%
+Schema valid                      72 / 100    72.00%
+Exact structured match             0 / 100     0.00%
+Chief complaint accuracy           0 / 100     0.00%
+Symptom extraction accuracy        2 / 100     2.00%
+Symptom status accuracy            2 / 100     2.00%
+Duration accuracy                  0 / 100     0.00%
+Medication accuracy               33 / 100    33.00%
+Allergy accuracy                  41 / 100    41.00%
+Missing information accuracy      26 / 100    26.00%
+
+Swahili
+------------------------------------------------------------------------
+Samples: 100
+Valid JSON                        93 / 100    93.00%
+Schema valid                      68 / 100    68.00%
+Exact structured match             0 / 100     0.00%
+Chief complaint accuracy           0 / 100     0.00%
+Symptom extraction accuracy        0 / 100     0.00%
+Symptom status accuracy            0 / 100     0.00%
+Duration accuracy                  0 / 100     0.00%
+Medication accuracy               26 / 100    26.00%
+Allergy accuracy                  38 / 100    38.00%
+Missing information accuracy      26 / 100    26.00%

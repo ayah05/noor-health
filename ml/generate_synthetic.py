@@ -654,6 +654,80 @@ def generate_missing_duration_case():
         symptoms,
     )
 
+# ============================================================
+# PATTERN: MISSING MEDICATIONS / ALLERGIES
+# ============================================================
+
+def generate_missing_non_symptom_information_case():
+    """
+    Generate a clinically ordinary symptom presentation.
+
+    Used for missing_medications and missing_allergies.
+
+    IMPORTANT:
+    Missing medication/allergy information must NOT imply
+    that the chief complaint duration is also missing.
+    """
+
+    group_name, group = choose_group()
+
+    chief_complaint = random.choice(
+        group["chief_complaints"]
+    )
+
+    # Force a known duration for the chief complaint.
+    # This prevents missing medications/allergies from becoming
+    # spuriously correlated with missing duration.
+    symptoms = [
+        create_symptom(
+            name=chief_complaint,
+            status="present",
+            duration=generate_duration(),
+        )
+    ]
+
+    # Add some symptom diversity without changing the
+    # missing-information pattern.
+    if random.random() < 0.50:
+
+        pool = get_additional_symptom_pool(
+            group,
+            chief_complaint,
+        )
+
+        symptom_name = random.choice(
+            pool
+        )
+
+        status = random.choice(
+            [
+                "present",
+                "absent",
+                "uncertain",
+            ]
+        )
+
+        duration = None
+
+        if (
+            status == "present"
+            and random.random() < 0.30
+        ):
+            duration = generate_duration()
+
+        symptoms.append(
+            create_symptom(
+                name=symptom_name,
+                status=status,
+                duration=duration,
+            )
+        )
+
+    return (
+        group_name,
+        chief_complaint,
+        symptoms,
+    )
 
 # ============================================================
 # PATTERN: MULTIPLE PRESENT
@@ -746,12 +820,14 @@ def generate_symptoms(
     if case_pattern == "mixed":
         return generate_mixed_case()
 
+    if case_pattern == "missing_duration":
+        return generate_missing_duration_case()
+
     if case_pattern in {
-        "missing_duration",
         "missing_medications",
         "missing_allergies",
     }:
-        return generate_missing_duration_case()
+        return generate_missing_non_symptom_information_case()
 
     if case_pattern == "multiple_present":
         return generate_multiple_present_case()
@@ -1232,9 +1308,13 @@ def validate_case(
         for symptom in symptoms
     ]
 
+    # --------------------------------------------------------
+    # NEGATION
+    # --------------------------------------------------------
+
     if (
-        pattern == "negation"
-        and "absent" not in statuses
+            pattern == "negation"
+            and "absent" not in statuses
     ):
         raise ValueError(
             f"{case['case_id']}: "
@@ -1242,16 +1322,23 @@ def validate_case(
             "an absent symptom"
         )
 
+    # --------------------------------------------------------
+    # UNCERTAINTY
+    # --------------------------------------------------------
+
     if (
-        pattern == "uncertainty"
-        and "uncertain"
-        not in statuses
+            pattern == "uncertainty"
+            and "uncertain" not in statuses
     ):
         raise ValueError(
             f"{case['case_id']}: "
             "uncertainty pattern requires "
             "an uncertain symptom"
         )
+
+    # --------------------------------------------------------
+    # MIXED
+    # --------------------------------------------------------
 
     if pattern == "mixed":
 
@@ -1262,7 +1349,7 @@ def validate_case(
         }
 
         if not required.issubset(
-            set(statuses)
+                set(statuses)
         ):
             raise ValueError(
                 f"{case['case_id']}: "
@@ -1270,12 +1357,14 @@ def validate_case(
                 "present, absent and uncertain"
             )
 
+    # --------------------------------------------------------
+    # MISSING DURATION
+    # --------------------------------------------------------
+
     if (
-        pattern == "missing_duration"
-        and "duration"
-        not in case[
-            "missing_information"
-        ]
+            pattern == "missing_duration"
+            and "duration"
+            not in case["missing_information"]
     ):
         raise ValueError(
             f"{case['case_id']}: "
@@ -1283,10 +1372,13 @@ def validate_case(
             "requires missing duration"
         )
 
+    # --------------------------------------------------------
+    # MISSING MEDICATIONS
+    # --------------------------------------------------------
+
     if (
-        pattern == "missing_medications"
-        and medications["status"]
-        != "unknown"
+            pattern == "missing_medications"
+            and medications["status"] != "unknown"
     ):
         raise ValueError(
             f"{case['case_id']}: "
@@ -1295,9 +1387,22 @@ def validate_case(
         )
 
     if (
-        pattern == "missing_allergies"
-        and allergies["status"]
-        != "unknown"
+            pattern == "missing_medications"
+            and chief["duration"] is None
+    ):
+        raise ValueError(
+            f"{case['case_id']}: "
+            "missing_medications must not "
+            "also imply missing duration"
+        )
+
+    # --------------------------------------------------------
+    # MISSING ALLERGIES
+    # --------------------------------------------------------
+
+    if (
+            pattern == "missing_allergies"
+            and allergies["status"] != "unknown"
     ):
         raise ValueError(
             f"{case['case_id']}: "
@@ -1306,8 +1411,22 @@ def validate_case(
         )
 
     if (
-        pattern == "multiple_present"
-        and statuses.count("present") < 2
+            pattern == "missing_allergies"
+            and chief["duration"] is None
+    ):
+        raise ValueError(
+            f"{case['case_id']}: "
+            "missing_allergies must not "
+            "also imply missing duration"
+        )
+
+    # --------------------------------------------------------
+    # MULTIPLE PRESENT
+    # --------------------------------------------------------
+
+    if (
+            pattern == "multiple_present"
+            and statuses.count("present") < 2
     ):
         raise ValueError(
             f"{case['case_id']}: "
@@ -1315,8 +1434,6 @@ def validate_case(
             "requires at least two "
             "present symptoms"
         )
-
-
 # ============================================================
 # DATASET VALIDATION
 # ============================================================

@@ -1,0 +1,10 @@
+{
+  "original_samples": 7000,
+  "repaired_clinical_cases": 200,
+  "clinical_change_keys": 1400,
+  "previous_qc_failures": 42,
+  "qc_overlap": 4,
+  "unique_regenerated_samples": 1438,
+  "final_samples": 7000,
+  "runtime_minutes": 14.161171468098958
+}

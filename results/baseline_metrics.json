@@ -1,0 +1,350 @@
+{
+  "model": "Qwen/Qwen3-0.6B",
+  "evaluation": "baseline",
+  "overall": {
+    "total": 700,
+    "valid_json": {
+      "count": 687,
+      "percentage": 98.14
+    },
+    "schema_valid": {
+      "count": 571,
+      "percentage": 81.57
+    },
+    "exact_match": {
+      "count": 4,
+      "percentage": 0.57
+    },
+    "chief_complaint": {
+      "count": 100,
+      "percentage": 14.29
+    },
+    "symptom_extraction": {
+      "count": 54,
+      "percentage": 7.71
+    },
+    "symptom_status": {
+      "count": 54,
+      "percentage": 7.71
+    },
+    "duration": {
+      "count": 30,
+      "percentage": 4.29
+    },
+    "medications": {
+      "count": 273,
+      "percentage": 39.0
+    },
+    "allergies": {
+      "count": 368,
+      "percentage": 52.57
+    },
+    "missing_information": {
+      "count": 192,
+      "percentage": 27.43
+    }
+  },
+  "by_language": {
+    "ar_msa": {
+      "total": 100,
+      "valid_json": {
+        "count": 99,
+        "percentage": 99.0
+      },
+      "schema_valid": {
+        "count": 95,
+        "percentage": 95.0
+      },
+      "exact_match": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "chief_complaint": {
+        "count": 5,
+        "percentage": 5.0
+      },
+      "symptom_extraction": {
+        "count": 4,
+        "percentage": 4.0
+      },
+      "symptom_status": {
+        "count": 4,
+        "percentage": 4.0
+      },
+      "duration": {
+        "count": 3,
+        "percentage": 3.0
+      },
+      "medications": {
+        "count": 30,
+        "percentage": 30.0
+      },
+      "allergies": {
+        "count": 38,
+        "percentage": 38.0
+      },
+      "missing_information": {
+        "count": 28,
+        "percentage": 28.0
+      }
+    },
+    "de": {
+      "total": 100,
+      "valid_json": {
+        "count": 99,
+        "percentage": 99.0
+      },
+      "schema_valid": {
+        "count": 84,
+        "percentage": 84.0
+      },
+      "exact_match": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "chief_complaint": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "symptom_extraction": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "symptom_status": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "duration": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "medications": {
+        "count": 56,
+        "percentage": 56.0
+      },
+      "allergies": {
+        "count": 83,
+        "percentage": 83.0
+      },
+      "missing_information": {
+        "count": 28,
+        "percentage": 28.0
+      }
+    },
+    "en": {
+      "total": 100,
+      "valid_json": {
+        "count": 100,
+        "percentage": 100.0
+      },
+      "schema_valid": {
+        "count": 79,
+        "percentage": 79.0
+      },
+      "exact_match": {
+        "count": 4,
+        "percentage": 4.0
+      },
+      "chief_complaint": {
+        "count": 80,
+        "percentage": 80.0
+      },
+      "symptom_extraction": {
+        "count": 39,
+        "percentage": 39.0
+      },
+      "symptom_status": {
+        "count": 39,
+        "percentage": 39.0
+      },
+      "duration": {
+        "count": 25,
+        "percentage": 25.0
+      },
+      "medications": {
+        "count": 57,
+        "percentage": 57.0
+      },
+      "allergies": {
+        "count": 70,
+        "percentage": 70.0
+      },
+      "missing_information": {
+        "count": 28,
+        "percentage": 28.0
+      }
+    },
+    "es": {
+      "total": 100,
+      "valid_json": {
+        "count": 100,
+        "percentage": 100.0
+      },
+      "schema_valid": {
+        "count": 88,
+        "percentage": 88.0
+      },
+      "exact_match": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "chief_complaint": {
+        "count": 2,
+        "percentage": 2.0
+      },
+      "symptom_extraction": {
+        "count": 4,
+        "percentage": 4.0
+      },
+      "symptom_status": {
+        "count": 4,
+        "percentage": 4.0
+      },
+      "duration": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "medications": {
+        "count": 38,
+        "percentage": 38.0
+      },
+      "allergies": {
+        "count": 52,
+        "percentage": 52.0
+      },
+      "missing_information": {
+        "count": 28,
+        "percentage": 28.0
+      }
+    },
+    "fr": {
+      "total": 100,
+      "valid_json": {
+        "count": 99,
+        "percentage": 99.0
+      },
+      "schema_valid": {
+        "count": 85,
+        "percentage": 85.0
+      },
+      "exact_match": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "chief_complaint": {
+        "count": 13,
+        "percentage": 13.0
+      },
+      "symptom_extraction": {
+        "count": 5,
+        "percentage": 5.0
+      },
+      "symptom_status": {
+        "count": 5,
+        "percentage": 5.0
+      },
+      "duration": {
+        "count": 2,
+        "percentage": 2.0
+      },
+      "medications": {
+        "count": 33,
+        "percentage": 33.0
+      },
+      "allergies": {
+        "count": 46,
+        "percentage": 46.0
+      },
+      "missing_information": {
+        "count": 28,
+        "percentage": 28.0
+      }
+    },
+    "hi": {
+      "total": 100,
+      "valid_json": {
+        "count": 97,
+        "percentage": 97.0
+      },
+      "schema_valid": {
+        "count": 72,
+        "percentage": 72.0
+      },
+      "exact_match": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "chief_complaint": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "symptom_extraction": {
+        "count": 2,
+        "percentage": 2.0
+      },
+      "symptom_status": {
+        "count": 2,
+        "percentage": 2.0
+      },
+      "duration": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "medications": {
+        "count": 33,
+        "percentage": 33.0
+      },
+      "allergies": {
+        "count": 41,
+        "percentage": 41.0
+      },
+      "missing_information": {
+        "count": 26,
+        "percentage": 26.0
+      }
+    },
+    "sw": {
+      "total": 100,
+      "valid_json": {
+        "count": 93,
+        "percentage": 93.0
+      },
+      "schema_valid": {
+        "count": 68,
+        "percentage": 68.0
+      },
+      "exact_match": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "chief_complaint": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "symptom_extraction": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "symptom_status": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "duration": {
+        "count": 0,
+        "percentage": 0.0
+      },
+      "medications": {
+        "count": 26,
+        "percentage": 26.0
+      },
+      "allergies": {
+        "count": 38,
+        "percentage": 38.0
+      },
+      "missing_information": {
+        "count": 26,
+        "percentage": 26.0
+      }
+    }
+  }
+}

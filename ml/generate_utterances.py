@@ -280,6 +280,31 @@ and make it clear which symptom the duration refers to.
 
 Do not transfer a duration from one symptom to another.
 
+A duration must apply ONLY to the symptom whose structured
+target contains that duration.
+
+Never coordinate a symptom that has a duration with another
+symptom whose "duration" is null in wording such as:
+
+"X and Y for 3 days"
+
+because this linguistically assigns the duration to BOTH
+symptoms.
+
+Instead, phrase them separately so it is completely
+unambiguous which symptom the duration belongs to.
+
+Example:
+
+Target:
+- cough: duration = 3 days
+- headache: duration = null
+
+BAD:
+"I have had a cough and headache for 3 days."
+
+GOOD:
+"I have had a cough for 3 days. I also have a headache."
 GRAMMATICAL DURATION FORM:
 
 The structured duration uses canonical units such as
@@ -306,6 +331,7 @@ Modern Standard Arabic:
 2 hours -> "ساعتين"
 1 week -> "أسبوع واحد"
 2 weeks -> "أسبوعين"
+
 
 Do not mechanically copy the canonical plural unit from the
 structured data.
@@ -455,6 +481,22 @@ Examples:
 7 days -> ٧ أيام
 2 weeks -> أسبوعان / أسبوعين as grammatically appropriate
 
+IMPORTANT FOR THE ARABIC DUAL:
+
+When the duration value is exactly 2, use the Arabic dual form
+WITHOUT placing the digit ٢ before it.
+
+Correct:
+2 hours -> ساعتان / ساعتين
+2 days -> يومان / يومين
+2 weeks -> أسبوعان / أسبوعين
+
+Incorrect:
+٢ ساعتين
+٢ يومين
+٢ أسبوعين
+
+The dual form itself already expresses the number two.
 For singular durations, prefer natural grammatical forms:
 
 1 day -> يوم واحد
