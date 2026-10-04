@@ -1,11 +1,16 @@
 import json
 import os
 import time
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from config import SYNTHETIC_DATA_DIR
+from config import (
+    SYNTHETIC_DATA_DIR,
+    PROCESSED_DATA_DIR,
+)
 
 
 # ============================================================
@@ -18,19 +23,47 @@ client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY")
 )
 
-INPUT_FILE = (
-    SYNTHETIC_DATA_DIR
-    / "clinical_cases_v2.jsonl"
-)
+
+# Number of simultaneous OpenAI requests.
+# Start with 10. If this runs without rate-limit problems,
+# you can later try 15.
+MAX_WORKERS = 10
+
+# Retry temporarily failed API requests.
+MAX_RETRIES = 5
+
+# Retry delays:
+# 2s -> 4s -> 8s -> 16s -> 32s
+RETRY_BASE_DELAY = 2
+
+# None = process all cases.
+MAX_CASES = None
+
+
+# ============================================================
+# INPUT SPLITS
+# ============================================================
+
+SPLIT_FILES = {
+    "train": (
+        PROCESSED_DATA_DIR
+        / "train_cases.jsonl"
+    ),
+    "validation": (
+        PROCESSED_DATA_DIR
+        / "validation_cases.jsonl"
+    ),
+    "test": (
+        PROCESSED_DATA_DIR
+        / "test_cases.jsonl"
+    ),
+}
+
 
 OUTPUT_FILE = (
     SYNTHETIC_DATA_DIR
-    / "multilingual_cases_v2.jsonl"
+    / "multilingual_cases_v2_full.jsonl"
 )
-
-# Keep this small while validating the dataset.
-# Set to None later to process all cases.
-MAX_CASES = 20
 
 
 LANGUAGES = {
@@ -44,23 +77,61 @@ LANGUAGES = {
 }
 
 
+# Prevent multiple threads from writing to the JSONL file
+# at exactly the same time.
+write_lock = threading.Lock()
+
+
 # ============================================================
 # LOAD CASES
 # ============================================================
 
 def load_cases() -> list[dict]:
+
     cases = []
 
-    with INPUT_FILE.open(
-        "r",
-        encoding="utf-8",
-    ) as file:
+    for split, input_file in SPLIT_FILES.items():
 
-        for line in file:
+        if not input_file.exists():
 
-            if line.strip():
+            raise FileNotFoundError(
+                f"Missing split file: "
+                f"{input_file}"
+            )
+
+        with input_file.open(
+            "r",
+            encoding="utf-8",
+        ) as file:
+
+            for line_number, line in enumerate(
+                file,
+                start=1,
+            ):
+
+                if not line.strip():
+                    continue
+
+                try:
+
+                    clinical_case = (
+                        json.loads(line)
+                    )
+
+                except json.JSONDecodeError as error:
+
+                    raise ValueError(
+                        f"Invalid JSON in "
+                        f"{input_file.name}, "
+                        f"line {line_number}: "
+                        f"{error}"
+                    ) from error
+
+                # Keep split only as dataset metadata.
+                clinical_case["_split"] = split
+
                 cases.append(
-                    json.loads(line)
+                    clinical_case
                 )
 
     if MAX_CASES is not None:
@@ -77,11 +148,11 @@ def build_target(
     clinical_case: dict,
 ) -> dict:
     """
-    Build the structured clinical output that Noor should
-    learn to predict from the patient utterance.
+    Build the structured output that Noor should learn to
+    predict.
 
-    Generator-only metadata such as case_id and symptom_group
-    is intentionally excluded.
+    Generator metadata such as case_id, case_pattern,
+    symptom_group and split is intentionally excluded.
     """
 
     return {
@@ -136,8 +207,22 @@ def build_prompt(
     language_name: str,
 ) -> str:
 
+    # Only provide clinically relevant information to the
+    # generation model.
+    prompt_case = {
+        key: value
+        for key, value
+        in clinical_case.items()
+        if key not in {
+            "_split",
+            "case_pattern",
+            "symptom_group",
+            "case_id",
+        }
+    }
+
     case_json = json.dumps(
-        clinical_case,
+        prompt_case,
         ensure_ascii=False,
         indent=2,
     )
@@ -226,6 +311,8 @@ Do not mechanically copy the canonical plural unit from the
 structured data.
 
 The numeric duration value must remain unchanged.
+
+
 ============================================================
 MEDICATIONS
 ============================================================
@@ -357,7 +444,8 @@ If the requested language is Modern Standard Arabic:
   use when speaking with a healthcare worker.
 - Preserve the original simplicity of the patient statement.
 
-Always use Arabic-Indic digits:
+When a number is naturally written as a digit in Arabic,
+use Arabic-Indic digits:
 
 ٠ ١ ٢ ٣ ٤ ٥ ٦ ٧ ٨ ٩
 
@@ -366,6 +454,12 @@ Examples:
 4 hours -> ٤ ساعات
 7 days -> ٧ أيام
 2 weeks -> أسبوعان / أسبوعين as grammatically appropriate
+
+For singular durations, prefer natural grammatical forms:
+
+1 day -> يوم واحد
+1 hour -> ساعة واحدة
+1 week -> أسبوع واحد
 
 Do NOT use Western digits 0-9.
 
@@ -392,6 +486,7 @@ Clinical meaning may NOT vary.
 
 The generated utterance must contain exactly the information
 represented by the clinical case.
+
 Do not add severity, intensity, frequency, or other clinical
 qualifiers unless they are explicitly represented in the
 clinical case.
@@ -402,6 +497,7 @@ change it to "severe fatigue", "extreme fatigue", or
 
 If severity is not represented in the structured case,
 keep the symptom neutral.
+
 No more and no less.
 
 
@@ -436,22 +532,59 @@ def generate_utterance(
         language_name,
     )
 
-    response = client.responses.create(
-        model="gpt-5-mini",
-        input=prompt,
-    )
+    last_error = None
 
-    utterance = response.output_text.strip()
-
-    # Remove accidental surrounding quotation marks.
-    if (
-        len(utterance) >= 2
-        and utterance[0] == '"'
-        and utterance[-1] == '"'
+    for attempt in range(
+        1,
+        MAX_RETRIES + 1,
     ):
-        utterance = utterance[1:-1]
 
-    return utterance.strip()
+        try:
+
+            response = client.responses.create(
+                model="gpt-5-mini",
+                input=prompt,
+            )
+
+            utterance = (
+                response.output_text.strip()
+            )
+
+            # Remove accidental surrounding quotation marks.
+            if (
+                len(utterance) >= 2
+                and utterance[0] == '"'
+                and utterance[-1] == '"'
+            ):
+                utterance = (
+                    utterance[1:-1]
+                )
+
+            return utterance.strip()
+
+        except Exception as error:
+
+            last_error = error
+
+            if attempt == MAX_RETRIES:
+                break
+
+            delay = (
+                RETRY_BASE_DELAY
+                * (2 ** (attempt - 1))
+            )
+
+            print(
+                f"  API error. "
+                f"Retry {attempt}/{MAX_RETRIES} "
+                f"in {delay}s: {error}"
+            )
+
+            time.sleep(
+                delay
+            )
+
+    raise last_error
 
 
 # ============================================================
@@ -462,30 +595,36 @@ def save_sample(
     sample: dict,
 ) -> None:
 
-    with OUTPUT_FILE.open(
-        "a",
-        encoding="utf-8",
-    ) as file:
+    # Only one thread may write at a time.
+    with write_lock:
 
-        file.write(
-            json.dumps(
-                sample,
-                ensure_ascii=False,
+        with OUTPUT_FILE.open(
+            "a",
+            encoding="utf-8",
+        ) as file:
+
+            file.write(
+                json.dumps(
+                    sample,
+                    ensure_ascii=False,
+                )
+                + "\n"
             )
-            + "\n"
-        )
 
 
 # ============================================================
-# EXISTING SAMPLES
+# EXISTING SAMPLES / RESUME
 # ============================================================
 
-def load_existing_keys() -> set[tuple[str, str]]:
+def load_existing_keys() -> set[
+    tuple[str, str, str]
+]:
     """
-    Allows the generation process to be safely resumed.
+    Allows generation to be safely resumed.
 
     A sample is uniquely identified by:
-        (case_id, language)
+
+        (case_id, split, language)
     """
 
     existing = set()
@@ -498,21 +637,84 @@ def load_existing_keys() -> set[tuple[str, str]]:
         encoding="utf-8",
     ) as file:
 
-        for line in file:
+        for line_number, line in enumerate(
+            file,
+            start=1,
+        ):
 
             if not line.strip():
                 continue
 
-            sample = json.loads(line)
+            try:
+
+                sample = json.loads(
+                    line
+                )
+
+            except json.JSONDecodeError as error:
+
+                raise ValueError(
+                    f"Invalid existing JSONL "
+                    f"at line {line_number}: "
+                    f"{error}"
+                ) from error
 
             existing.add(
                 (
                     sample["case_id"],
+                    sample["split"],
                     sample["language"],
                 )
             )
 
     return existing
+
+
+# ============================================================
+# WORKER
+# ============================================================
+
+def process_sample(
+    clinical_case: dict,
+    language_code: str,
+    language_name: str,
+) -> dict:
+
+    case_id = clinical_case[
+        "case_id"
+    ]
+
+    split = clinical_case[
+        "_split"
+    ]
+
+    target = build_target(
+        clinical_case
+    )
+
+    utterance = generate_utterance(
+        clinical_case,
+        language_name,
+    )
+
+    # Deterministically enforce Arabic-Indic digits for MSA.
+    if language_code == "ar_msa":
+
+        utterance = (
+            convert_to_arabic_indic_digits(
+                utterance
+            )
+        )
+
+    return {
+        "case_id": case_id,
+        "split": split,
+        "language": language_code,
+        "utterance": utterance,
+        "target": target,
+        "source": "synthetic",
+        "schema_version": "v2",
+    }
 
 
 # ============================================================
@@ -524,46 +726,63 @@ def main():
     print("=" * 60)
     print(
         "NOOR HEALTH - "
-        "MULTILINGUAL DATA GENERATION V2"
+        "PARALLEL MULTILINGUAL DATA GENERATION V2"
     )
     print("=" * 60)
 
     cases = load_cases()
 
-    existing_keys = load_existing_keys()
+    existing_keys = (
+        load_existing_keys()
+    )
 
-    print(
-        f"\nClinical cases: {len(cases)}"
+    total_possible = (
+        len(cases)
+        * len(LANGUAGES)
     )
 
     print(
-        f"Languages: {len(LANGUAGES)}"
+        f"\nClinical cases: "
+        f"{len(cases)}"
+    )
+
+    print(
+        f"Languages: "
+        f"{len(LANGUAGES)}"
     )
 
     print(
         f"Maximum samples: "
-        f"{len(cases) * len(LANGUAGES)}"
+        f"{total_possible}"
     )
 
-    generated = 0
+    print(
+        f"Existing samples: "
+        f"{len(existing_keys)}"
+    )
+
+    print(
+        f"Workers: "
+        f"{MAX_WORKERS}"
+    )
+
+    # ========================================================
+    # BUILD REMAINING JOBS
+    # ========================================================
+
+    jobs = []
+
     skipped = 0
-    failed = 0
 
-    for case_index, clinical_case in enumerate(
-        cases,
-        start=1,
-    ):
+    for clinical_case in cases:
 
-        case_id = clinical_case["case_id"]
+        case_id = clinical_case[
+            "case_id"
+        ]
 
-        print(
-            f"\n[{case_index}/{len(cases)}] "
-            f"{case_id}"
-        )
-
-        target = build_target(
-            clinical_case
-        )
+        split = clinical_case[
+            "_split"
+        ]
 
         for (
             language_code,
@@ -572,78 +791,173 @@ def main():
 
             key = (
                 case_id,
+                split,
                 language_code,
             )
 
-            # Allows safe resume after interruption.
             if key in existing_keys:
 
-                print(
-                    f"  {language_code}: "
-                    "already exists"
-                )
-
                 skipped += 1
+
                 continue
+
+            jobs.append(
+                (
+                    clinical_case,
+                    language_code,
+                    language_name,
+                )
+            )
+
+    print(
+        f"Remaining samples: "
+        f"{len(jobs)}"
+    )
+
+    if not jobs:
+
+        print(
+            "\nNothing to generate. "
+            "Dataset is already complete."
+        )
+
+        return
+
+    print(
+        "\nStarting parallel generation...\n"
+    )
+
+    generated = 0
+    failed = 0
+
+    start_time = time.time()
+
+    # ========================================================
+    # PARALLEL GENERATION
+    # ========================================================
+
+    with ThreadPoolExecutor(
+        max_workers=MAX_WORKERS
+    ) as executor:
+
+        future_to_job = {}
+
+        for (
+            clinical_case,
+            language_code,
+            language_name,
+        ) in jobs:
+
+            future = executor.submit(
+                process_sample,
+                clinical_case,
+                language_code,
+                language_name,
+            )
+
+            future_to_job[
+                future
+            ] = (
+                clinical_case[
+                    "case_id"
+                ],
+                clinical_case[
+                    "_split"
+                ],
+                language_code,
+            )
+
+        for future in as_completed(
+            future_to_job
+        ):
+
+            (
+                case_id,
+                split,
+                language_code,
+            ) = future_to_job[
+                future
+            ]
 
             try:
 
-                utterance = generate_utterance(
-                    clinical_case,
-                    language_name,
-                )
-
-                # Deterministically enforce Arabic-Indic
-                # digits for MSA.
-                if language_code == "ar_msa":
-                    utterance = (
-                        convert_to_arabic_indic_digits(
-                            utterance
-                        )
-                    )
-
-                sample = {
-                    "case_id": case_id,
-                    "language": language_code,
-                    "utterance": utterance,
-
-                    # Ground truth that Qwen will
-                    # eventually learn to produce.
-                    "target": target,
-
-                    # Dataset provenance.
-                    "source": "synthetic",
-                    "schema_version": "v2",
-                }
+                sample = future.result()
 
                 save_sample(
                     sample
                 )
 
-                existing_keys.add(
-                    key
-                )
-
                 generated += 1
 
-                print(
-                    f"  {language_code}: "
-                    f"{utterance}"
+                completed = (
+                    generated
+                    + failed
                 )
 
-                time.sleep(0.2)
+                elapsed = (
+                    time.time()
+                    - start_time
+                )
+
+                rate = (
+                    generated
+                    / elapsed
+                    * 60
+                    if elapsed > 0
+                    else 0
+                )
+
+                remaining = (
+                    len(jobs)
+                    - completed
+                )
+
+                eta_minutes = (
+                    remaining / rate
+                    if rate > 0
+                    else 0
+                )
+
+                print(
+                    f"[{completed}/{len(jobs)}] "
+                    f"{case_id}/{language_code} "
+                    f"PASS | "
+                    f"{rate:.1f} samples/min | "
+                    f"ETA {eta_minutes:.1f} min"
+                )
 
             except Exception as error:
 
                 failed += 1
 
+                completed = (
+                    generated
+                    + failed
+                )
+
                 print(
-                    f"  {language_code}: ERROR"
+                    f"[{completed}/{len(jobs)}] "
+                    f"{case_id}/{language_code} "
+                    f"ERROR"
                 )
 
                 print(
                     f"    {error}"
                 )
+
+    # ========================================================
+    # FINAL REPORT
+    # ========================================================
+
+    elapsed = (
+        time.time()
+        - start_time
+    )
+
+    total_after_run = (
+        len(existing_keys)
+        + generated
+    )
 
     print(
         "\n" + "=" * 60
@@ -658,21 +972,52 @@ def main():
     )
 
     print(
-        f"Generated: {generated}"
+        f"Generated now: "
+        f"{generated}"
     )
 
     print(
-        f"Skipped:   {skipped}"
+        f"Already existed: "
+        f"{skipped}"
     )
 
     print(
-        f"Failed:    {failed}"
+        f"Failed: "
+        f"{failed}"
     )
+
+    print(
+        f"Total available: "
+        f"{total_after_run}"
+        f"/{total_possible}"
+    )
+
+    print(
+        f"Runtime: "
+        f"{elapsed / 60:.1f} minutes"
+    )
+
+    if elapsed > 0:
+
+        print(
+            f"Average rate: "
+            f"{generated / elapsed * 60:.1f} "
+            f"samples/min"
+        )
 
     print(
         f"\nDataset saved to:\n"
         f"{OUTPUT_FILE}"
     )
+
+    if failed > 0:
+
+        print(
+            "\nSome samples failed. "
+            "Run this script again after completion. "
+            "The resume mechanism will generate only "
+            "the missing samples."
+        )
 
 
 if __name__ == "__main__":

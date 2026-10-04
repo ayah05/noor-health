@@ -1,7 +1,9 @@
 import json
 import os
+import threading
 import time
 from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -16,27 +18,57 @@ from config import SYNTHETIC_DATA_DIR, RESULTS_DIR
 load_dotenv()
 
 client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
+    api_key=os.getenv("OPENAPI_KEY")
 )
 
 INPUT_FILE = (
     SYNTHETIC_DATA_DIR
-    / "multilingual_cases_v2.jsonl"
+    / "multilingual_cases_v2_full.jsonl"
 )
 
 OUTPUT_FILE = (
     RESULTS_DIR
-    / "semantic_validation_v2.jsonl"
+    / "semantic_validation.jsonl"
 )
 
-VALIDATOR_MODEL = "gpt-5-mini"
+MODEL = "gpt-5-mini"
+
+MAX_WORKERS = 10
+MAX_RETRIES = 5
+RETRY_BASE_DELAY = 2
+
+
+EXPECTED_LANGUAGES = {
+    "en",
+    "de",
+    "ar_msa",
+    "fr",
+    "es",
+    "hi",
+    "sw",
+}
+
+
+LANGUAGE_NAMES = {
+    "en": "English",
+    "de": "German",
+    "ar_msa": "Modern Standard Arabic",
+    "fr": "French",
+    "es": "Spanish",
+    "hi": "Hindi",
+    "sw": "Swahili",
+}
+
+
+write_lock = threading.Lock()
 
 
 # ============================================================
-# LOAD DATA
+# LOAD JSONL
 # ============================================================
 
 def load_jsonl(path) -> list[dict]:
+
     rows = []
 
     with path.open(
@@ -44,59 +76,94 @@ def load_jsonl(path) -> list[dict]:
         encoding="utf-8",
     ) as file:
 
-        for line in file:
+        for line_number, line in enumerate(
+            file,
+            start=1,
+        ):
 
-            if line.strip():
+            if not line.strip():
+                continue
+
+            try:
+
                 rows.append(
                     json.loads(line)
                 )
+
+            except json.JSONDecodeError as error:
+
+                raise ValueError(
+                    f"Invalid JSON in "
+                    f"{path.name}, "
+                    f"line {line_number}: "
+                    f"{error}"
+                ) from error
 
     return rows
 
 
 # ============================================================
-# LOAD EXISTING RESULTS
+# RESUME SUPPORT
 # ============================================================
 
-def load_existing_keys() -> set[tuple[str, str]]:
-    """
-    Allows validation to resume after interruption.
-    """
+def load_existing_results():
 
-    existing = set()
+    results = {}
 
     if not OUTPUT_FILE.exists():
-        return existing
+        return results
 
     with OUTPUT_FILE.open(
         "r",
         encoding="utf-8",
     ) as file:
 
-        for line in file:
+        for line_number, line in enumerate(
+            file,
+            start=1,
+        ):
 
             if not line.strip():
                 continue
 
-            result = json.loads(line)
+            try:
 
-            existing.add(
-                (
-                    result["case_id"],
-                    result["language"],
+                row = json.loads(line)
+
+            except json.JSONDecodeError:
+
+                print(
+                    f"WARNING: skipping invalid "
+                    f"result line {line_number}"
                 )
+
+                continue
+
+            key = (
+                row.get("case_id"),
+                row.get("split"),
+                row.get("language"),
             )
 
-    return existing
+            results[key] = row
+
+    return results
 
 
 # ============================================================
 # PROMPT
 # ============================================================
 
-def build_validation_prompt(
-    sample: dict,
-) -> str:
+def build_prompt(sample: dict) -> str:
+
+    language_code = sample["language"]
+
+    language_name = LANGUAGE_NAMES.get(
+        language_code,
+        language_code,
+    )
+
+    utterance = sample["utterance"]
 
     target_json = json.dumps(
         sample["target"],
@@ -105,319 +172,482 @@ def build_validation_prompt(
     )
 
     return f"""
-You are validating multilingual synthetic training data for
-a clinical information extraction research project.
+You are a strict multilingual clinical-data quality reviewer.
 
-Your task is NOT to diagnose the patient.
+You are validating one synthetic training sample for Noor Health,
+an offline-first multilingual clinical intake assistant.
 
-Your task is ONLY to determine whether the patient utterance
-expresses exactly the information contained in the ground
-truth target.
+The system is NOT a diagnostic system.
 
+Your task is to compare a patient utterance against its canonical
+structured clinical target.
 
-============================================================
-LANGUAGE
-============================================================
+LANGUAGE:
+{language_name}
 
-Language code:
+LANGUAGE CODE:
+{language_code}
 
-{sample["language"]}
+PATIENT UTTERANCE:
+{utterance}
 
-
-============================================================
-PATIENT UTTERANCE
-============================================================
-
-{sample["utterance"]}
-
-
-============================================================
-EXPECTED GROUND TRUTH
-============================================================
-
+EXPECTED STRUCTURED TARGET:
 {target_json}
 
 
 ============================================================
-VALIDATION RULES
+TASK 1 — CLINICAL SEMANTIC CONSISTENCY
 ============================================================
 
-Compare the patient utterance with the expected ground truth.
+Determine whether the patient utterance faithfully expresses the
+clinical information represented by the target.
 
-Evaluate each category independently.
+Check ALL of the following carefully:
 
+1. CHIEF COMPLAINT
 
-1. SYMPTOMS
+The chief complaint must be expressed as present.
 
-Check that every symptom represented in the target is
-expressed correctly in the utterance.
-
-The utterance must not introduce additional symptoms.
-
-
-2. SYMPTOM STATUS
-
-Status semantics are strict:
-
-"present"
-= the patient clearly reports having the symptom.
-
-"absent"
-= the patient clearly denies having the symptom.
-
-"uncertain"
-= the patient explicitly expresses uncertainty about whether
-  the symptom is present.
-
-Do not treat "uncertain" as "present".
-
-Do not treat "absent" as "unknown".
+Do not require the utterance to literally use the English canonical
+term. Natural translations and normal synonyms are allowed.
 
 
-3. DURATION
+2. SYMPTOMS
 
-Check every duration independently.
+For every symptom in the target, verify:
 
-A duration must:
-- have the correct value
-- have the correct unit
-- refer to the correct symptom
+- the symptom itself is represented,
+- "present" is expressed as present,
+- "absent" is clearly negated,
+- "uncertain" is clearly expressed as uncertain.
 
-If duration is null, the utterance must NOT invent a duration
-for that symptom.
+Do not confuse absence with uncertainty.
+
+Do not allow clinically meaningful symptoms to be added if they are
+not represented in the target.
+
+
+3. DURATIONS
+
+Durations are symptom-specific.
+
+If a symptom has a duration in the target, the utterance must express
+that same duration for that symptom.
+
+Example:
+
+Target:
+cough = 4 days
+fever = present, duration unknown
+
+Correct:
+"I have had a cough for four days and I also have a fever."
+
+Incorrect:
+"I have had a cough and fever for four days."
+
+The incorrect version assigns four days to both symptoms.
+
+If duration is null, do NOT require a duration to be mentioned.
+
+If the utterance invents a specific duration for a symptom whose
+duration is null, that is a semantic error.
 
 
 4. MEDICATIONS
 
-"unknown":
-Medication must not be mentioned.
+Interpret the target statuses exactly:
 
-"none":
-The patient must explicitly state that they are not taking
+unknown:
+The utterance must NOT claim whether the patient takes medication.
+
+none:
+The utterance must explicitly state that the patient takes no
 medication.
 
-"reported":
-The correct medication or medications must be mentioned.
+reported:
+The utterance must communicate the listed medication item(s).
 
-Translated or transliterated medication names are allowed
-when they refer to the same medication.
+Do not treat "not mentioned" as "none".
 
 
 5. ALLERGIES
 
-"unknown":
-Allergies must not be mentioned.
+Interpret the target statuses exactly:
 
-"none":
-The patient must explicitly indicate no known allergies.
+unknown:
+The utterance must NOT claim whether allergies exist.
 
-"reported":
-The correct allergy or allergies must be mentioned.
+none:
+The utterance must explicitly communicate no known allergies.
 
-Translated or transliterated names are allowed.
+reported:
+The utterance must communicate the listed allergy item(s).
+
+Do not treat "not mentioned" as "none".
 
 
 6. MISSING INFORMATION
 
-Missing information must remain missing.
+The field "missing_information" describes information that is absent
+from the utterance and should later be requested by the intake system.
+
+Therefore:
+
+- "duration" means the chief complaint duration is not stated,
+- "medications" means medication status is not stated,
+- "allergies" means allergy status is not stated.
+
+Do NOT require the utterance to literally mention that information is
+missing.
+
+Instead verify that the corresponding information is genuinely absent.
+
+
+7. HALLUCINATIONS / CONTRADICTIONS
+
+Fail semantic consistency if the utterance:
+
+- adds clinically meaningful facts not represented in the target,
+- contradicts the target,
+- changes symptom status,
+- changes duration,
+- changes medication,
+- changes allergy information,
+- associates a duration with the wrong symptom.
+
+
+============================================================
+TASK 2 — LANGUAGE QUALITY
+============================================================
+
+Separately judge whether the utterance is natural and grammatically
+acceptable in {language_name}.
+
+Minor stylistic variation is acceptable.
+
+Do NOT fail language quality merely because:
+
+- wording is informal,
+- a synonym is used,
+- punctuation differs,
+- numbers are written as words instead of digits.
+
+Fail language quality when there is a genuine linguistic problem such
+as:
+
+- clearly incorrect grammar,
+- malformed number/unit agreement,
+- unnatural construction severe enough to be poor training data,
+- wrong-language text,
+- broken or corrupted text.
+
+For Modern Standard Arabic, pay particular attention to natural
+number/unit grammar.
 
 For example:
 
-If medications are unknown, the utterance must not turn this
-into "I take no medication".
+"منذ أسبوعين"
+is natural for "for two weeks".
 
-If allergies are unknown, the utterance must not turn this
-into "I have no allergies".
+"منذ ٢ أسبوعين"
+is grammatically malformed and should fail language quality.
 
-If duration is missing, no duration may be invented.
+For Hindi, ensure the sentence is understandable natural Hindi.
+
+For Swahili, ensure the sentence is understandable natural Swahili.
 
 
-7. EXTRA INFORMATION
+============================================================
+IMPORTANT DISTINCTION
+============================================================
 
-The utterance must not introduce additional clinical facts
-that are absent from the target.
+A sample may be semantically correct but linguistically flawed.
 
-Minor stylistic wording differences are NOT errors.
+Example:
 
-Natural grammatical transformations are NOT errors.
+The utterance communicates exactly "two weeks" but uses malformed
+Arabic grammar.
 
-For example:
+In that situation:
 
-1 day -> "one day"
-1 day -> "يوم واحد"
+semantic_passed = true
+language_passed = false
 
-are semantically equivalent.
+Do NOT mark a semantic failure purely because of grammar if the
+clinical meaning is still unambiguous.
 
 
 ============================================================
 OUTPUT
 ============================================================
 
-Return ONLY valid JSON with exactly this structure:
+Return ONLY valid JSON.
+
+Use exactly this structure:
 
 {{
-  "symptoms_correct": true,
-  "statuses_correct": true,
-  "durations_correct": true,
-  "medications_correct": true,
-  "allergies_correct": true,
-  "missing_information_correct": true,
-  "extra_information": false,
-  "pass": true,
-  "issues": []
+  "semantic_passed": true,
+  "language_passed": true,
+  "semantic_errors": [],
+  "language_errors": []
 }}
 
-"pass" must be true ONLY if:
+If an error exists, use short objects like:
 
-- symptoms_correct is true
-- statuses_correct is true
-- durations_correct is true
-- medications_correct is true
-- allergies_correct is true
-- missing_information_correct is true
-- extra_information is false
+{{
+  "type": "duration_mismatch",
+  "description": "The utterance says three days but the target says four days."
+}}
 
-If something is incorrect, add a short description to
-"issues".
+Possible semantic error types include:
 
-Do not add any other fields.
-Do not return Markdown.
-Do not explain anything outside the JSON.
+- missing_chief_complaint
+- missing_symptom
+- symptom_status_mismatch
+- duration_missing
+- duration_mismatch
+- duration_wrong_symptom
+- invented_duration
+- medication_mismatch
+- allergy_mismatch
+- missing_information_mismatch
+- hallucinated_information
+- contradiction
+- other_semantic_error
+
+Possible language error types include:
+
+- grammar_error
+- malformed_duration_expression
+- wrong_language
+- unnatural_language
+- corrupted_text
+- other_language_error
+
+Be strict about clinical meaning.
+
+Do not invent errors.
+
+Return JSON only.
 """.strip()
 
 
 # ============================================================
-# VALIDATE ONE SAMPLE
+# PARSE MODEL OUTPUT
 # ============================================================
 
-def validate_sample(
-    sample: dict,
-) -> dict:
+def parse_json_response(text: str) -> dict:
 
-    prompt = build_validation_prompt(
-        sample
+    text = text.strip()
+
+    # Defensive cleanup in case the model still uses fences.
+    if text.startswith("```json"):
+        text = text[7:]
+
+    elif text.startswith("```"):
+        text = text[3:]
+
+    if text.endswith("```"):
+        text = text[:-3]
+
+    text = text.strip()
+
+    result = json.loads(text)
+
+    required_fields = {
+        "semantic_passed",
+        "language_passed",
+        "semantic_errors",
+        "language_errors",
+    }
+
+    missing_fields = (
+        required_fields
+        - set(result.keys())
     )
 
-    response = client.responses.create(
-        model=VALIDATOR_MODEL,
-        input=prompt,
-    )
+    if missing_fields:
 
-    raw_output = (
-        response.output_text.strip()
-    )
+        raise ValueError(
+            "Judge response missing fields: "
+            f"{sorted(missing_fields)}"
+        )
 
-    # Protect against accidental Markdown fences.
-    if raw_output.startswith("```json"):
-        raw_output = raw_output[7:]
+    if not isinstance(
+        result["semantic_passed"],
+        bool,
+    ):
 
-    elif raw_output.startswith("```"):
-        raw_output = raw_output[3:]
+        raise ValueError(
+            "semantic_passed must be boolean"
+        )
 
-    if raw_output.endswith("```"):
-        raw_output = raw_output[:-3]
+    if not isinstance(
+        result["language_passed"],
+        bool,
+    ):
 
-    raw_output = raw_output.strip()
+        raise ValueError(
+            "language_passed must be boolean"
+        )
 
-    result = json.loads(
-        raw_output
-    )
+    if not isinstance(
+        result["semantic_errors"],
+        list,
+    ):
+
+        raise ValueError(
+            "semantic_errors must be list"
+        )
+
+    if not isinstance(
+        result["language_errors"],
+        list,
+    ):
+
+        raise ValueError(
+            "language_errors must be list"
+        )
 
     return result
 
 
 # ============================================================
-# SAVE RESULT
+# API CALL WITH RETRIES
 # ============================================================
 
-def save_result(
-    result: dict,
-) -> None:
+def judge_sample(sample: dict) -> dict:
+
+    prompt = build_prompt(sample)
+
+    last_error = None
+
+    for attempt in range(
+        1,
+        MAX_RETRIES + 1,
+    ):
+
+        try:
+
+            response = client.responses.create(
+                model=MODEL,
+                input=prompt,
+            )
+
+            result = parse_json_response(
+                response.output_text
+            )
+
+            return {
+                "case_id":
+                    sample["case_id"],
+
+                "split":
+                    sample["split"],
+
+                "language":
+                    sample["language"],
+
+                "semantic_passed":
+                    result[
+                        "semantic_passed"
+                    ],
+
+                "language_passed":
+                    result[
+                        "language_passed"
+                    ],
+
+                "semantic_errors":
+                    result[
+                        "semantic_errors"
+                    ],
+
+                "language_errors":
+                    result[
+                        "language_errors"
+                    ],
+
+                "judge_model":
+                    MODEL,
+            }
+
+        except Exception as error:
+
+            last_error = error
+
+            if attempt == MAX_RETRIES:
+                break
+
+            delay = (
+                RETRY_BASE_DELAY
+                * (2 ** (attempt - 1))
+            )
+
+            time.sleep(delay)
+
+    raise RuntimeError(
+        f"Judge failed after "
+        f"{MAX_RETRIES} attempts: "
+        f"{last_error}"
+    )
+
+
+# ============================================================
+# SAVE
+# ============================================================
+
+def save_result(result: dict):
 
     OUTPUT_FILE.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    with OUTPUT_FILE.open(
-        "a",
-        encoding="utf-8",
-    ) as file:
-
-        file.write(
-            json.dumps(
-                result,
-                ensure_ascii=False,
-            )
-            + "\n"
-        )
-
-
-# ============================================================
-# VALIDATE RESULT FORMAT
-# ============================================================
-
-def validate_result_format(
-    validation: dict,
-) -> None:
-
-    boolean_fields = [
-        "symptoms_correct",
-        "statuses_correct",
-        "durations_correct",
-        "medications_correct",
-        "allergies_correct",
-        "missing_information_correct",
-        "extra_information",
-        "pass",
-    ]
-
-    for field in boolean_fields:
-
-        if field not in validation:
-            raise ValueError(
-                f"Validator response missing "
-                f"field: {field}"
-            )
-
-        if not isinstance(
-            validation[field],
-            bool,
-        ):
-            raise ValueError(
-                f"{field} must be boolean"
-            )
-
-    if "issues" not in validation:
-        raise ValueError(
-            "Validator response missing "
-            "'issues'"
-        )
-
-    if not isinstance(
-        validation["issues"],
-        list,
-    ):
-        raise ValueError(
-            "'issues' must be a list"
-        )
-
-    # Do not blindly trust the LLM's own pass field.
-    expected_pass = (
-        validation["symptoms_correct"]
-        and validation["statuses_correct"]
-        and validation["durations_correct"]
-        and validation["medications_correct"]
-        and validation["allergies_correct"]
-        and validation[
-            "missing_information_correct"
-        ]
-        and not validation[
-            "extra_information"
-        ]
+    line = json.dumps(
+        result,
+        ensure_ascii=False,
     )
 
-    validation["pass"] = expected_pass
+    with write_lock:
+
+        with OUTPUT_FILE.open(
+            "a",
+            encoding="utf-8",
+        ) as file:
+
+            file.write(
+                line + "\n"
+            )
+
+
+# ============================================================
+# ERROR TYPE EXTRACTION
+# ============================================================
+
+def get_error_types(
+    errors: list,
+) -> list[str]:
+
+    types = []
+
+    for error in errors:
+
+        if isinstance(error, dict):
+
+            error_type = error.get(
+                "type",
+                "unknown",
+            )
+
+        else:
+
+            error_type = "unknown"
+
+        types.append(error_type)
+
+    return types
 
 
 # ============================================================
@@ -426,171 +656,228 @@ def validate_result_format(
 
 def print_report(
     results: list[dict],
-) -> None:
+    failed_api_jobs: list,
+):
 
     print("\n" + "=" * 60)
-    print("SEMANTIC VALIDATION REPORT")
+    print(
+        "SEMANTIC VALIDATION REPORT"
+    )
     print("=" * 60)
 
     total = len(results)
 
-    passed = sum(
-        result["validation"]["pass"]
+    semantic_passed = sum(
+        result["semantic_passed"]
         for result in results
     )
 
-    failed = total - passed
+    language_passed = sum(
+        result["language_passed"]
+        for result in results
+    )
 
-    pass_rate = (
-        passed / total * 100
-        if total
-        else 0
+    fully_passed = sum(
+        (
+            result["semantic_passed"]
+            and result["language_passed"]
+        )
+        for result in results
+    )
+
+    semantic_failed = (
+        total - semantic_passed
+    )
+
+    language_failed = (
+        total - language_passed
+    )
+
+    fully_failed = (
+        total - fully_passed
     )
 
     print(
-        f"\nSamples checked: {total}"
+        f"\nResults available: "
+        f"{total}"
     )
 
     print(
-        f"Passed:          {passed}"
+        f"API jobs failed:    "
+        f"{len(failed_api_jobs)}"
     )
 
     print(
-        f"Failed:          {failed}"
+        "\nClinical semantics:"
     )
 
     print(
-        f"Pass rate:       "
-        f"{pass_rate:.1f}%"
+        f"  Passed: {semantic_passed}"
+    )
+
+    print(
+        f"  Failed: {semantic_failed}"
+    )
+
+    print(
+        "\nLanguage quality:"
+    )
+
+    print(
+        f"  Passed: {language_passed}"
+    )
+
+    print(
+        f"  Failed: {language_failed}"
+    )
+
+    print(
+        "\nFully usable samples:"
+    )
+
+    print(
+        f"  Passed both: {fully_passed}"
+    )
+
+    print(
+        f"  Failed either: {fully_failed}"
     )
 
     # --------------------------------------------------------
-    # BY LANGUAGE
+    # LANGUAGE BREAKDOWN
     # --------------------------------------------------------
 
-    language_stats = defaultdict(
-        lambda: {
-            "total": 0,
-            "passed": 0,
-        }
-    )
+    by_language = defaultdict(list)
 
     for result in results:
 
-        language = result["language"]
+        by_language[
+            result["language"]
+        ].append(result)
 
-        language_stats[
-            language
-        ]["total"] += 1
+    print(
+        "\nResults by language:"
+    )
 
-        if result[
-            "validation"
-        ]["pass"]:
-
-            language_stats[
-                language
-            ]["passed"] += 1
-
-    print("\nBy language:")
+    print(
+        "  "
+        f"{'Language':<10}"
+        f"{'Total':>8}"
+        f"{'SemFail':>10}"
+        f"{'LangFail':>10}"
+        f"{'Either':>10}"
+    )
 
     for language in sorted(
-        language_stats
+        EXPECTED_LANGUAGES
     ):
 
-        stats = language_stats[
+        rows = by_language[
             language
         ]
 
+        sem_fail = sum(
+            not row["semantic_passed"]
+            for row in rows
+        )
+
+        lang_fail = sum(
+            not row["language_passed"]
+            for row in rows
+        )
+
+        either_fail = sum(
+            not (
+                row["semantic_passed"]
+                and row["language_passed"]
+            )
+            for row in rows
+        )
+
         print(
-            f"  {language:<8} "
-            f"{stats['passed']}/"
-            f"{stats['total']}"
+            "  "
+            f"{language:<10}"
+            f"{len(rows):>8}"
+            f"{sem_fail:>10}"
+            f"{lang_fail:>10}"
+            f"{either_fail:>10}"
         )
 
     # --------------------------------------------------------
-    # ERROR CATEGORIES
+    # ERROR TYPES
     # --------------------------------------------------------
 
-    error_counts = Counter()
+    semantic_error_counts = Counter()
 
-    fields = [
-        "symptoms_correct",
-        "statuses_correct",
-        "durations_correct",
-        "medications_correct",
-        "allergies_correct",
-        "missing_information_correct",
-    ]
+    language_error_counts = Counter()
 
     for result in results:
 
-        validation = result[
-            "validation"
-        ]
+        semantic_error_counts.update(
+            get_error_types(
+                result[
+                    "semantic_errors"
+                ]
+            )
+        )
 
-        for field in fields:
+        language_error_counts.update(
+            get_error_types(
+                result[
+                    "language_errors"
+                ]
+            )
+        )
 
-            if not validation[field]:
-                error_counts[field] += 1
+    print(
+        "\nSemantic error types:"
+    )
 
-        if validation[
-            "extra_information"
-        ]:
-            error_counts[
-                "extra_information"
-            ] += 1
+    if semantic_error_counts:
 
-    print("\nError categories:")
-
-    if not error_counts:
-        print("  None")
-
-    else:
-        for field, count in (
-            error_counts.most_common()
+        for (
+            error_type,
+            count,
+        ) in (
+            semantic_error_counts
+            .most_common()
         ):
+
             print(
-                f"  {field:<30} "
+                f"  {error_type:<32} "
                 f"{count}"
             )
 
-    # --------------------------------------------------------
-    # FAILED SAMPLES
-    # --------------------------------------------------------
+    else:
 
-    failed_results = [
-        result
-        for result in results
-        if not result[
-            "validation"
-        ]["pass"]
-    ]
+        print(
+            "  None"
+        )
 
-    if failed_results:
+    print(
+        "\nLanguage error types:"
+    )
 
-        print("\nFailed samples:")
+    if language_error_counts:
 
-        for result in failed_results:
-
-            print(
-                f"\n  "
-                f"{result['case_id']}/"
-                f"{result['language']}"
-            )
+        for (
+            error_type,
+            count,
+        ) in (
+            language_error_counts
+            .most_common()
+        ):
 
             print(
-                f"  Utterance: "
-                f"{result['utterance']}"
+                f"  {error_type:<32} "
+                f"{count}"
             )
 
-            for issue in (
-                result["validation"][
-                    "issues"
-                ]
-            ):
-                print(
-                    f"    - {issue}"
-                )
+    else:
+
+        print(
+            "  None"
+        )
 
 
 # ============================================================
@@ -601,8 +888,7 @@ def main():
 
     print("=" * 60)
     print(
-        "NOOR HEALTH - "
-        "SEMANTIC VALIDATION"
+        "NOOR HEALTH - SEMANTIC DATASET VALIDATION"
     )
     print("=" * 60)
 
@@ -610,145 +896,270 @@ def main():
         INPUT_FILE
     )
 
-    existing_keys = (
-        load_existing_keys()
+    existing_results = (
+        load_existing_results()
     )
 
     print(
-        f"\nSamples: {len(samples)}"
+        f"\nDataset samples: "
+        f"{len(samples)}"
     )
 
     print(
-        f"Already validated: "
-        f"{len(existing_keys)}"
+        f"Existing judge results: "
+        f"{len(existing_results)}"
     )
 
-    generated = 0
-    skipped = 0
-    failed_requests = 0
+    jobs = []
 
-    for index, sample in enumerate(
-        samples,
-        start=1,
-    ):
-
-        case_id = sample["case_id"]
-        language = sample["language"]
+    for sample in samples:
 
         key = (
-            case_id,
-            language,
+            sample["case_id"],
+            sample["split"],
+            sample["language"],
         )
+
+        if key not in existing_results:
+
+            jobs.append(sample)
+
+    print(
+        f"Remaining samples: "
+        f"{len(jobs)}"
+    )
+
+    print(
+        f"Workers: "
+        f"{MAX_WORKERS}"
+    )
+
+    # --------------------------------------------------------
+    # NOTHING LEFT
+    # --------------------------------------------------------
+
+    if not jobs:
 
         print(
-            f"\n[{index}/{len(samples)}] "
-            f"{case_id}/{language}"
+            "\nAll samples have already "
+            "been validated."
         )
 
-        if key in existing_keys:
+        print_report(
+            list(
+                existing_results.values()
+            ),
+            [],
+        )
 
-            print(
-                "  already validated"
+        return
+
+    # --------------------------------------------------------
+    # PARALLEL VALIDATION
+    # --------------------------------------------------------
+
+    print(
+        "\nStarting parallel semantic "
+        "validation...\n"
+    )
+
+    start_time = time.time()
+
+    completed_now = 0
+
+    failed_api_jobs = []
+
+    with ThreadPoolExecutor(
+        max_workers=MAX_WORKERS
+    ) as executor:
+
+        future_to_sample = {
+            executor.submit(
+                judge_sample,
+                sample,
+            ): sample
+
+            for sample in jobs
+        }
+
+        for future in as_completed(
+            future_to_sample
+        ):
+
+            sample = (
+                future_to_sample[
+                    future
+                ]
             )
 
-            skipped += 1
-            continue
+            try:
 
-        try:
+                result = future.result()
 
-            validation = validate_sample(
-                sample
-            )
+                save_result(result)
 
-            validate_result_format(
-                validation
-            )
+                key = (
+                    result["case_id"],
+                    result["split"],
+                    result["language"],
+                )
 
-            result = {
-                "case_id": case_id,
-                "language": language,
-                "utterance":
-                    sample["utterance"],
-                "validation":
-                    validation,
-            }
+                existing_results[
+                    key
+                ] = result
 
-            save_result(
-                result
-            )
+                completed_now += 1
 
-            existing_keys.add(
-                key
-            )
+                elapsed = (
+                    time.time()
+                    - start_time
+                )
 
-            generated += 1
+                rate = (
+                    completed_now
+                    / elapsed
+                    * 60
+                    if elapsed > 0
+                    else 0
+                )
 
-            status = (
-                "PASS"
-                if validation["pass"]
-                else "FAIL"
-            )
+                remaining = (
+                    len(jobs)
+                    - completed_now
+                )
 
-            print(
-                f"  {status}"
-            )
+                eta = (
+                    remaining / rate
+                    if rate > 0
+                    else 0
+                )
 
-            if not validation["pass"]:
+                status = []
 
-                for issue in (
-                    validation["issues"]
-                ):
-                    print(
-                        f"    - {issue}"
+                if result[
+                    "semantic_passed"
+                ]:
+
+                    status.append(
+                        "SEM:PASS"
                     )
 
-            time.sleep(0.2)
+                else:
 
-        except Exception as error:
+                    status.append(
+                        "SEM:FAIL"
+                    )
 
-            failed_requests += 1
+                if result[
+                    "language_passed"
+                ]:
 
-            print(
-                "  ERROR"
-            )
+                    status.append(
+                        "LANG:PASS"
+                    )
 
-            print(
-                f"    {error}"
-            )
+                else:
 
-    # ========================================================
-    # LOAD ALL RESULTS FOR FINAL REPORT
-    # ========================================================
+                    status.append(
+                        "LANG:FAIL"
+                    )
 
-    results = load_jsonl(
-        OUTPUT_FILE
-    )
+                status_text = " | ".join(
+                    status
+                )
 
-    print_report(
-        results
-    )
+                print(
+                    f"[{completed_now}/"
+                    f"{len(jobs)}] "
+                    f"{result['case_id']}/"
+                    f"{result['language']} "
+                    f"{status_text} | "
+                    f"{rate:.1f}/min | "
+                    f"ETA {eta:.1f} min"
+                )
+
+            except Exception as error:
+
+                failed_api_jobs.append({
+                    "case_id":
+                        sample["case_id"],
+
+                    "split":
+                        sample["split"],
+
+                    "language":
+                        sample["language"],
+
+                    "error":
+                        str(error),
+                })
+
+                print(
+                    f"ERROR: "
+                    f"{sample['case_id']}/"
+                    f"{sample['language']} "
+                    f"{error}"
+                )
+
+    # --------------------------------------------------------
+    # FINAL REPORT
+    # --------------------------------------------------------
+
+    runtime_minutes = (
+        time.time()
+        - start_time
+    ) / 60
 
     print(
         "\n" + "=" * 60
     )
 
     print(
-        f"New validations: {generated}"
+        "VALIDATION RUN COMPLETE"
     )
 
     print(
-        f"Skipped:         {skipped}"
+        "=" * 60
     )
 
     print(
-        f"Request errors:  "
-        f"{failed_requests}"
+        f"\nValidated now: "
+        f"{completed_now}"
     )
 
     print(
-        f"\nResults saved to:\n"
-        f"{OUTPUT_FILE}"
+        f"API failures: "
+        f"{len(failed_api_jobs)}"
     )
+
+    print(
+        f"Total results available: "
+        f"{len(existing_results)}/"
+        f"{len(samples)}"
+    )
+
+    print(
+        f"Runtime: "
+        f"{runtime_minutes:.1f} minutes"
+    )
+
+    print_report(
+        list(
+            existing_results.values()
+        ),
+        failed_api_jobs,
+    )
+
+    if failed_api_jobs:
+
+        print(
+            "\nSome API calls failed."
+        )
+
+        print(
+            "Simply run this script again. "
+            "Completed samples will be skipped."
+        )
 
 
 if __name__ == "__main__":
