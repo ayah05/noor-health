@@ -12,7 +12,7 @@ APP_NAME = "noor-health-training"
 
 BASE_MODEL = "Qwen/Qwen3-0.6B"
 
-REMOTE_DATA_DIR = "/data"
+REMOTE_DATA_DIR = "../data"
 REMOTE_OUTPUT_DIR = "/outputs/noor-health-qwen3-lora"
 
 TRAIN_FILE = f"{REMOTE_DATA_DIR}/train_sft.jsonl"

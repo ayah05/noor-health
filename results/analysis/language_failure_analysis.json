@@ -1,0 +1,152 @@
+{
+  "total_predictions": 700,
+  "unique_cases": 100,
+  "languages": {
+    "fr": {
+      "total": 100,
+      "correct": 88,
+      "failed": 12,
+      "accuracy": 88.0,
+      "failure_types": {
+        "missing_symptom": 12,
+        "wrong_duration": 2
+      }
+    },
+    "de": {
+      "total": 100,
+      "correct": 93,
+      "failed": 7,
+      "accuracy": 93.0,
+      "failure_types": {
+        "missing_symptom": 7,
+        "wrong_duration": 3,
+        "wrong_symptom_status": 1
+      }
+    },
+    "en": {
+      "total": 100,
+      "correct": 89,
+      "failed": 11,
+      "accuracy": 89.0,
+      "failure_types": {
+        "missing_symptom": 10,
+        "wrong_chief_complaint": 1
+      }
+    },
+    "es": {
+      "total": 100,
+      "correct": 89,
+      "failed": 11,
+      "accuracy": 89.0,
+      "failure_types": {
+        "missing_symptom": 10,
+        "wrong_symptom_status": 2,
+        "wrong_duration": 4
+      }
+    },
+    "sw": {
+      "total": 100,
+      "correct": 52,
+      "failed": 48,
+      "accuracy": 52.0,
+      "failure_types": {
+        "invalid_json": 3,
+        "missing_symptom": 34,
+        "duplicate_symptom": 3,
+        "wrong_symptom_status": 26,
+        "wrong_duration": 11,
+        "extra_symptom": 7,
+        "wrong_chief_complaint": 5,
+        "allergy_error": 15,
+        "medication_error": 2
+      }
+    },
+    "ar_msa": {
+      "total": 100,
+      "correct": 84,
+      "failed": 16,
+      "accuracy": 84.0,
+      "failure_types": {
+        "missing_symptom": 8,
+        "allergy_error": 8,
+        "invalid_json": 1
+      }
+    },
+    "hi": {
+      "total": 100,
+      "correct": 48,
+      "failed": 52,
+      "accuracy": 48.0,
+      "failure_types": {
+        "wrong_chief_complaint": 6,
+        "missing_symptom": 32,
+        "extra_symptom": 32,
+        "medication_error": 13,
+        "wrong_duration": 9,
+        "duplicate_symptom": 4,
+        "invalid_json": 1,
+        "allergy_error": 9,
+        "wrong_symptom_status": 5
+      }
+    }
+  },
+  "cross_language": {
+    "all_correct": 29,
+    "all_failed": 2,
+    "mixed": 69,
+    "only_hindi_failed": 22,
+    "only_swahili_failed": 13,
+    "hindi_and_swahili_failed_others_correct": 10,
+    "only_hindi_failed_case_ids": [
+      "case_0079",
+      "case_0112",
+      "case_0023",
+      "case_0329",
+      "case_0168",
+      "case_0422",
+      "case_0424",
+      "case_0663",
+      "case_0681",
+      "case_0537",
+      "case_0850",
+      "case_0394",
+      "case_0407",
+      "case_0452",
+      "case_0442",
+      "case_0378",
+      "case_0376",
+      "case_0216",
+      "case_0178",
+      "case_0887",
+      "case_0067",
+      "case_0295"
+    ],
+    "only_swahili_failed_case_ids": [
+      "case_0307",
+      "case_0108",
+      "case_0988",
+      "case_0405",
+      "case_0258",
+      "case_0164",
+      "case_0357",
+      "case_0406",
+      "case_0335",
+      "case_0529",
+      "case_0193",
+      "case_0844",
+      "case_0322"
+    ],
+    "hindi_swahili_specific_case_ids": [
+      "case_0076",
+      "case_0432",
+      "case_0059",
+      "case_0931",
+      "case_0344",
+      "case_0271",
+      "case_0114",
+      "case_0228",
+      "case_0083",
+      "case_0242"
+    ]
+  }
+}

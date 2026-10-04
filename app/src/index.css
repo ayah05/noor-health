@@ -142,7 +142,7 @@ button {
     minmax(0, 1.05fr);
 
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .intakePanel,
@@ -529,6 +529,13 @@ textarea:focus {
 
   font-size: 11px;
   line-height: 1.5;
+}
+
+.completeCard {
+  display: flex;
+  gap: 12px;
+
+  margin-top: 24px;
 }
 
 @media (max-width: 850px) {

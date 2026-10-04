@@ -18,6 +18,7 @@ image = (
         "transformers>=4.51.0",
         "accelerate",
         "safetensors",
+        "peft",
     )
 )
 
@@ -27,6 +28,8 @@ model_volume = modal.Volume.from_name(
 )
 
 MODEL_DIR = "/models/qwen3-0.6b"
+
+ADAPTER_DIR = "/models/noor-health-qwen3-lora/final-adapter"
 
 
 # ============================================================
@@ -104,7 +107,7 @@ class NoorModel:
     @modal.enter()
     def load_model(self):
         import torch
-
+        from peft import PeftModel
         from transformers import (
             AutoModelForCausalLM,
             AutoTokenizer,
@@ -123,12 +126,20 @@ class NoorModel:
                 self.tokenizer.eos_token
             )
 
-        self.model = (
-            AutoModelForCausalLM.from_pretrained(
-                MODEL_DIR,
-                torch_dtype=torch.bfloat16,
-                device_map="cuda",
-            )
+        base_model = AutoModelForCausalLM.from_pretrained(
+            MODEL_DIR,
+            torch_dtype=torch.bfloat16,
+            device_map="cuda",
+        )
+
+        print(
+            "Loading Noor Health LoRA adapter from:",
+            ADAPTER_DIR,
+        )
+
+        self.model = PeftModel.from_pretrained(
+            base_model,
+            ADAPTER_DIR,
         )
 
         self.model.eval()

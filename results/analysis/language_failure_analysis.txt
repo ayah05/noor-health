@@ -1,0 +1,3247 @@
+============================================================================
+NOOR HEALTH - LANGUAGE FAILURE ANALYSIS
+============================================================================
+
+LANGUAGE SUMMARY
+----------------------------------------------------------------------------
+Arabic: 84/100 (84.00%)
+  missing_symptom: 8
+  allergy_error: 8
+  invalid_json: 1
+
+German: 93/100 (93.00%)
+  missing_symptom: 7
+  wrong_duration: 3
+  wrong_symptom_status: 1
+
+English: 89/100 (89.00%)
+  missing_symptom: 10
+  wrong_chief_complaint: 1
+
+Spanish: 89/100 (89.00%)
+  missing_symptom: 10
+  wrong_duration: 4
+  wrong_symptom_status: 2
+
+French: 88/100 (88.00%)
+  missing_symptom: 12
+  wrong_duration: 2
+
+Hindi: 48/100 (48.00%)
+  missing_symptom: 32
+  extra_symptom: 32
+  medication_error: 13
+  wrong_duration: 9
+  allergy_error: 9
+  wrong_chief_complaint: 6
+  wrong_symptom_status: 5
+  duplicate_symptom: 4
+  invalid_json: 1
+
+Swahili: 52/100 (52.00%)
+  missing_symptom: 34
+  wrong_symptom_status: 26
+  allergy_error: 15
+  wrong_duration: 11
+  extra_symptom: 7
+  wrong_chief_complaint: 5
+  invalid_json: 3
+  duplicate_symptom: 3
+  medication_error: 2
+
+============================================================================
+CROSS-LANGUAGE CASE ANALYSIS
+============================================================================
+Correct in every language: 29
+Failed in every language: 2
+Mixed success/failure: 69
+Only Hindi failed: 22
+Only Swahili failed: 13
+Hindi + Swahili failed, all others correct: 10
+
+============================================================================
+HINDI FAILURE EXAMPLES
+============================================================================
+
+CASE: case_0079
+LANGUAGE: Hindi
+
+INPUT:
+पिछले एक सप्ताह से मुझे छाती में दर्द है, मैं कोई दवा नहीं ले रहा हूँ और मुझे इबुप्रोफेन से एलर्जी है।
+
+TARGET:
+{
+  "chief_complaint": "chest pain",
+  "symptoms": [
+    {
+      "name": "chest pain",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "ibuprofen"
+    ]
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "vomiting",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "ibuprofen"
+    ]
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "wrong_chief_complaint",   "expected": "chest pain",   "predicted": "itching" }
+- {   "type": "missing_symptom",   "symptom": "chest pain" }
+- {   "type": "extra_symptom",   "symptom": "itching" }
+- {   "type": "extra_symptom",   "symptom": "vomiting" }
+- {   "type": "medication_error",   "expected": {     "status": "none",     "items": []   },   "predicted": {     "status": "unknown",     "items": []   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0112
+LANGUAGE: Hindi
+
+INPUT:
+मुझे जोड़ों में दर्द है, पिछले छह दिनों से। पीठ में दर्द नहीं है। मैं अभी कोई दवा नहीं ले रहा हूँ और मुझे एस्पिरिन से एलर्जी है।
+
+TARGET:
+{
+  "chief_complaint": "joint pain",
+  "symptoms": [
+    {
+      "name": "joint pain",
+      "status": "present",
+      "duration": {
+        "value": 6,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "back pain",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "aspirin"
+    ]
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{
+  "chief_complaint": "joint pain",
+  "symptoms": [
+    {
+      "name": "joint pain",
+      "status": "present",
+      "duration": {
+        "value": 9,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "back pain",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "aspirin"
+    ]
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "wrong_duration",   "symptom": "joint pain",   "expected": {     "value": 6,     "unit": "days"   },   "predicted": {     "value": 9,     "unit": "days"   } }
+- {   "type": "medication_error",   "expected": {     "status": "none",     "items": []   },   "predicted": {     "status": "unknown",     "items": []   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0023
+LANGUAGE: Hindi
+
+INPUT:
+मुझे तीन दिनों से दाने हैं; खुजली है या नहीं यह मुझे पक्का नहीं पता। मैं कोई दवा नहीं ले रहा हूँ और मुझे कोई एलर्जी नहीं है।
+
+TARGET:
+{
+  "chief_complaint": "rash",
+  "symptoms": [
+    {
+      "name": "rash",
+      "status": "present",
+      "duration": {
+        "value": 3,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "itching",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{
+  "chief_complaint": "rash",
+  "symptoms": [
+    {
+      "name": "rash",
+      "status": "present",
+      "duration": {
+        "value": 3,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "itching",
+      "status": "uncertain",
+      "duration": null
+    },
+    {
+      "name": "itching",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "duplicate_symptom",   "symptom": "itching",   "count": 2 }
+
+----------------------------------------------------------------------------
+
+CASE: case_0840
+LANGUAGE: Hindi
+
+INPUT:
+पेशाब करते समय दर्द पिछले एक सप्ताह से हो रहा है और मुझे बार-बार पेशाब आता है; मुझे पता नहीं कि बुखार है या नहीं, मेरी कमर में दर्द नहीं है, और मुझे इबुप्रोफेन से एलर्जी है।
+
+TARGET:
+{
+  "chief_complaint": "painful urination",
+  "symptoms": [
+    {
+      "name": "painful urination",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "fever",
+      "status": "uncertain",
+      "duration": null
+    },
+    {
+      "name": "back pain",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "frequent urination",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "ibuprofen"
+    ]
+  },
+  "missing_information": [
+    "medications"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "vomiting",
+  "symptoms": [
+    {
+      "name": "vomiting",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "fever",
+      "status": "uncertain",
+      "duration": null
+    },
+    {
+      "name": "abdominal pain",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "ibuprofen"
+    ]
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "wrong_chief_complaint",   "expected": "painful urination",   "predicted": "vomiting" }
+- {   "type": "missing_symptom",   "symptom": "back pain" }
+- {   "type": "missing_symptom",   "symptom": "frequent urination" }
+- {   "type": "missing_symptom",   "symptom": "painful urination" }
+- {   "type": "extra_symptom",   "symptom": "abdominal pain" }
+- {   "type": "extra_symptom",   "symptom": "vomiting" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0076
+LANGUAGE: Hindi
+
+INPUT:
+मेरी नाक पिछले ८ घंटे से बह रही है। मुझे साँस लेने में दिक्कत नहीं है और मैं कोई दवा नहीं ले रहा हूँ।
+
+TARGET:
+{
+  "chief_complaint": "runny nose",
+  "symptoms": [
+    {
+      "name": "runny nose",
+      "status": "present",
+      "duration": {
+        "value": 8,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "shortness of breath",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "runny nose",
+  "symptoms": [
+    {
+      "name": "runny nose",
+      "status": "present",
+      "duration": {
+        "value": 8,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "shortness of breath",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "vomiting",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "extra_symptom",   "symptom": "vomiting" }
+- {   "type": "medication_error",   "expected": {     "status": "none",     "items": []   },   "predicted": {     "status": "unknown",     "items": []   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0432
+LANGUAGE: Hindi
+
+INPUT:
+पिछले दो हफ्ते से मुझे कब्ज है, बुखार नहीं है और मैं इबुप्रोफेन ले रहा हूँ।
+
+TARGET:
+{
+  "chief_complaint": "constipation",
+  "symptoms": [
+    {
+      "name": "constipation",
+      "status": "present",
+      "duration": {
+        "value": 2,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "fever",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "reported",
+    "items": [
+      "ibuprofen"
+    ]
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{"chief_complaint":"constipation","symptoms":[{"name":"constipation","status":"present","duration":{"value":2,"unit":"weeks"}},{"name":"fever","status":"absent","duration":null},{"name":"ibuprofen","status":"reported","items":["ibuprofen"]}]},{"medications":{"status":"reported","items":["ibuprofen"]}},{"allergies":{"status":"unknown","items":[]}},"missing_information":["duration","medications","allergies"]}
+
+ERRORS:
+- {   "type": "invalid_json",   "detail": "Prediction could not be parsed." }
+
+----------------------------------------------------------------------------
+
+CASE: case_0858
+LANGUAGE: Hindi
+
+INPUT:
+खुजली पिछले ११ घंटों से हो रही है और बुखार पिछले १२ घंटों से है; दाने नहीं हैं, और सूजन है या नहीं मुझे पक्का पता नहीं।
+
+TARGET:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": {
+        "value": 11,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "rash",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "fever",
+      "status": "present",
+      "duration": {
+        "value": 12,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "swelling",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": {
+        "value": 11,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "fever",
+      "status": "present",
+      "duration": {
+        "value": 12,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "rash",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "pain",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "missing_symptom",   "symptom": "swelling" }
+- {   "type": "extra_symptom",   "symptom": "pain" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0059
+LANGUAGE: Hindi
+
+INPUT:
+मुझे खुजली हो रही है, दाने नहीं हैं, मैं कोई दवा नहीं ले रहा हूँ और मुझे कोई एलर्जी नहीं है।
+
+TARGET:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "rash",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "rash",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "medication_error",   "expected": {     "status": "none",     "items": []   },   "predicted": {     "status": "unknown",     "items": []   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0329
+LANGUAGE: Hindi
+
+INPUT:
+मुझे २ सप्ताह से बुखार है। मैं इबुप्रोफेन ले रहा हूँ।
+
+TARGET:
+{
+  "chief_complaint": "fever",
+  "symptoms": [
+    {
+      "name": "fever",
+      "status": "present",
+      "duration": {
+        "value": 2,
+        "unit": "weeks"
+      }
+    }
+  ],
+  "medications": {
+    "status": "reported",
+    "items": [
+      "ibuprofen"
+    ]
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "fever",
+  "symptoms": [
+    {
+      "name": "fever",
+      "status": "present",
+      "duration": {
+        "value": 2,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "cough",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "extra_symptom",   "symptom": "cough" }
+- {   "type": "medication_error",   "expected": {     "status": "reported",     "items": [       "ibuprofen"     ]   },   "predicted": {     "status": "unknown",     "items": []   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0984
+LANGUAGE: Hindi
+
+INPUT:
+मुझे पिछले एक घंटे से दस्त हो रहे हैं और मुझे पक्का नहीं पता कि क्या मुझे चक्कर आ रहा है। मुझे पेनिसिलिन से एलर्जी है।
+
+TARGET:
+{
+  "chief_complaint": "diarrhea",
+  "symptoms": [
+    {
+      "name": "diarrhea",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "dizziness",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "penicillin"
+    ]
+  },
+  "missing_information": [
+    "medications"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "diarrhea",
+  "symptoms": [
+    {
+      "name": "diarrhea",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "dizziness",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "penile pain"
+    ]
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "allergy_error",   "expected": {     "status": "reported",     "items": [       "penicillin"     ]   },   "predicted": {     "status": "reported",     "items": [       "penile pain"     ]   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0168
+LANGUAGE: Hindi
+
+INPUT:
+मुझे 2 दिनों से खांसी है। मैं कोई दवा नहीं ले रहा हूँ।
+
+TARGET:
+{
+  "chief_complaint": "cough",
+  "symptoms": [
+    {
+      "name": "cough",
+      "status": "present",
+      "duration": {
+        "value": 2,
+        "unit": "days"
+      }
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "cough",
+  "symptoms": [
+    {
+      "name": "cough",
+      "status": "present",
+      "duration": {
+        "value": 2,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "vomiting",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "extra_symptom",   "symptom": "vomiting" }
+- {   "type": "medication_error",   "expected": {     "status": "none",     "items": []   },   "predicted": {     "status": "unknown",     "items": []   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0460
+LANGUAGE: Hindi
+
+INPUT:
+मुझे ६ दिनों से रैश है, १ सप्ताह से खुजली हो रही है और पिछले ६ घंटों से सूजन है। मैं कोई दवा नहीं ले रहा हूँ और मुझे पेनिसिलिन से एलर्जी है।
+
+TARGET:
+{
+  "chief_complaint": "rash",
+  "symptoms": [
+    {
+      "name": "rash",
+      "status": "present",
+      "duration": {
+        "value": 6,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "swelling",
+      "status": "present",
+      "duration": {
+        "value": 6,
+        "unit": "hours"
+      }
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "penicillin"
+    ]
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{
+  "chief_complaint": "runny nose",
+  "symptoms": [
+    {
+      "name": "runny nose",
+      "status": "present",
+      "duration": {
+        "value": 6,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": {
+        "value": 7,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "cough",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "penile pain"
+    ]
+  },
+  "missing_information": [
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "wrong_chief_complaint",   "expected": "rash",   "predicted": "runny nose" }
+- {   "type": "missing_symptom",   "symptom": "rash" }
+- {   "type": "missing_symptom",   "symptom": "swelling" }
+- {   "type": "extra_symptom",   "symptom": "cough" }
+- {   "type": "extra_symptom",   "symptom": "runny nose" }
+- {   "type": "wrong_duration",   "symptom": "itching",   "expected": {     "value": 1,     "unit": "weeks"   },   "predicted": {     "value": 7,     "unit": "weeks"   } }
+- {   "type": "allergy_error",   "expected": {     "status": "reported",     "items": [       "penicillin"     ]   },   "predicted": {     "status": "reported",     "items": [       "penile pain"     ]   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0089
+LANGUAGE: Hindi
+
+INPUT:
+मुझे कब्ज़ है, भूख भी नहीं लग रही है। मुझे उल्टी नहीं हो रही है और दस्त है या नहीं यह मुझे पता नहीं। मैं कोई दवा नहीं ले रहा हूँ और मुझे कोई एलर्जी भी नहीं है।
+
+TARGET:
+{
+  "chief_complaint": "constipation",
+  "symptoms": [
+    {
+      "name": "constipation",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "diarrhea",
+      "status": "uncertain",
+      "duration": null
+    },
+    {
+      "name": "vomiting",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "loss of appetite",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "constipation",
+  "symptoms": [
+    {
+      "name": "constipation",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "vomiting",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "fever",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "missing_symptom",   "symptom": "diarrhea" }
+- {   "type": "missing_symptom",   "symptom": "loss of appetite" }
+- {   "type": "extra_symptom",   "symptom": "fever" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0931
+LANGUAGE: Hindi
+
+INPUT:
+पिछले ५ दिनों से मुझे साँस लेने में दिक्कत हो रही है। मुझे थकान नहीं है। मैं कोई दवा नहीं ले रहा हूँ।
+
+TARGET:
+{
+  "chief_complaint": "shortness of breath",
+  "symptoms": [
+    {
+      "name": "shortness of breath",
+      "status": "present",
+      "duration": {
+        "value": 5,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "fatigue",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "shortness of breath",
+  "symptoms": [
+    {
+      "name": "shortness of breath",
+      "status": "present",
+      "duration": {
+        "value": 5,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "fatigue",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "reported",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "medication_error",   "expected": {     "status": "none",     "items": []   },   "predicted": {     "status": "reported",     "items": []   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0422
+LANGUAGE: Hindi
+
+INPUT:
+मुझे पिछले एक हफ्ते से साँस लेने में दिक्कत हो रही है। नाक बह रही है या नहीं, मुझे पक्का नहीं पता। मैं कोई दवा नहीं ले रहा हूँ और मुझे एस्पिरिन से एलर्जी है।
+
+TARGET:
+{
+  "chief_complaint": "shortness of breath",
+  "symptoms": [
+    {
+      "name": "shortness of breath",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "runny nose",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "aspirin"
+    ]
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{
+  "chief_complaint": "shortness of breath",
+  "symptoms": [
+    {
+      "name": "shortness of breath",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "runny nose",
+      "status": "uncertain",
+      "duration": null
+    },
+    {
+      "name": "cough",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "aspirin"
+    ]
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "extra_symptom",   "symptom": "cough" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0424
+LANGUAGE: Hindi
+
+INPUT:
+मुझे खुजली हो रही है, पर सूजन है या नहीं मुझे पता नहीं; मेरी कोई एलर्जी नहीं है।
+
+TARGET:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "swelling",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "itching",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "missing_symptom",   "symptom": "swelling" }
+- {   "type": "duplicate_symptom",   "symptom": "itching",   "count": 2 }
+
+----------------------------------------------------------------------------
+
+CASE: case_0230
+LANGUAGE: Hindi
+
+INPUT:
+पेशाब करते समय दर्द पिछले २ हफ्ते से हो रहा है और मुझे बार-बार पेशाब आता है। बुखार है या नहीं मुझे पता नहीं। मेरी पीठ में दर्द नहीं है। मैं अमॉक्सिसिलिन ले रहा हूँ और मुझे कोई एलर्जी नहीं है।
+
+TARGET:
+{
+  "chief_complaint": "painful urination",
+  "symptoms": [
+    {
+      "name": "painful urination",
+      "status": "present",
+      "duration": {
+        "value": 2,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "fever",
+      "status": "uncertain",
+      "duration": null
+    },
+    {
+      "name": "back pain",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "frequent urination",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "reported",
+    "items": [
+      "amoxicillin"
+    ]
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{
+  "chief_complaint": "vomiting",
+  "symptoms": [
+    {
+      "name": "vomiting",
+      "status": "present",
+      "duration": {
+        "value": 2,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "nausea",
+      "status": "present",
+      "duration": {
+        "value": 2,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "abdominal pain",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "fever",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "reported",
+    "items": [
+      "amoxicillin"
+    ]
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "wrong_chief_complaint",   "expected": "painful urination",   "predicted": "vomiting" }
+- {   "type": "missing_symptom",   "symptom": "back pain" }
+- {   "type": "missing_symptom",   "symptom": "frequent urination" }
+- {   "type": "missing_symptom",   "symptom": "painful urination" }
+- {   "type": "extra_symptom",   "symptom": "abdominal pain" }
+- {   "type": "extra_symptom",   "symptom": "nausea" }
+- {   "type": "extra_symptom",   "symptom": "vomiting" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0663
+LANGUAGE: Hindi
+
+INPUT:
+मुझे पिछले ११ घंटे से उल्टी आ रही है, लेकिन मुझे भूख की कमी नहीं है और मुझे एस्पिरिन से एलर्जी है।
+
+TARGET:
+{
+  "chief_complaint": "vomiting",
+  "symptoms": [
+    {
+      "name": "vomiting",
+      "status": "present",
+      "duration": {
+        "value": 11,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "loss of appetite",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "aspirin"
+    ]
+  },
+  "missing_information": [
+    "medications"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "vomiting",
+  "symptoms": [
+    {
+      "name": "vomiting",
+      "status": "present",
+      "duration": {
+        "value": 11,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "cough",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "aspirin"
+    ]
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "missing_symptom",   "symptom": "loss of appetite" }
+- {   "type": "extra_symptom",   "symptom": "cough" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0681
+LANGUAGE: Hindi
+
+INPUT:
+मुझे पेशाब करते समय दर्द पिछले एक सप्ताह से है, पेट में दर्द नहीं है और मैं कोई दवा नहीं ले रहा हूँ।
+
+TARGET:
+{
+  "chief_complaint": "painful urination",
+  "symptoms": [
+    {
+      "name": "painful urination",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "abdominal pain",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "painful urination",
+  "symptoms": [
+    {
+      "name": "painful urination",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "abdominal pain",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "vomiting",
+      "status": "none",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "extra_symptom",   "symptom": "vomiting" }
+- {   "type": "medication_error",   "expected": {     "status": "none",     "items": []   },   "predicted": {     "status": "unknown",     "items": []   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0537
+LANGUAGE: Hindi
+
+INPUT:
+मुझे कब्ज़ है और मुझे किसी चीज़ से एलर्जी नहीं है
+
+TARGET:
+{
+  "chief_complaint": "constipation",
+  "symptoms": [
+    {
+      "name": "constipation",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "constipation",
+  "symptoms": [
+    {
+      "name": "constipation",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "allergies"
+    ]
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "allergy_error",   "expected": {     "status": "none",     "items": []   },   "predicted": {     "status": "reported",     "items": [       "allergies"     ]   } }
+
+----------------------------------------------------------------------------
+
+============================================================================
+SWAHILI FAILURE EXAMPLES
+============================================================================
+
+CASE: case_0307
+LANGUAGE: Swahili
+
+INPUT:
+Nina mwasho kwa masaa matatu sasa, na sijui kama nina homa. Sina dawa ninazochukua, na nina mzio kwa aspirin.
+
+TARGET:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": {
+        "value": 3,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "fever",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "aspirin"
+    ]
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{"chief_complaint":"itching","symptoms":[{"name":"itching","status":"present","duration":{"value":3,"unit":"hours"}},{"name":"fever","status":"uncertain","duration":null}],"medications":{"status":"none","items":[]},"allergies":{"status":"reported","items":["aspirin"]}}{"missing_information":["duration","medications","allergies"]}
+
+ERRORS:
+- {   "type": "invalid_json",   "detail": "Prediction could not be parsed." }
+
+----------------------------------------------------------------------------
+
+CASE: case_0118
+LANGUAGE: Swahili
+
+INPUT:
+Niko na kikohozi kwa siku 7 na nimekuwa na homa kwa siku 6, sina kutokwa kwa pua, sijui kama nina maumivu ya kichwa, na sina mzio ninayojua.
+
+TARGET:
+{
+  "chief_complaint": "cough",
+  "symptoms": [
+    {
+      "name": "cough",
+      "status": "present",
+      "duration": {
+        "value": 7,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "runny nose",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "fever",
+      "status": "present",
+      "duration": {
+        "value": 6,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "headache",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "medications"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "cough",
+  "symptoms": [
+    {
+      "name": "cough",
+      "status": "present",
+      "duration": {
+        "value": 7,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "headache",
+      "status": "absent",
+      "duration": {
+        "value": 6,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "headache",
+      "status": "uncertain",
+      "duration": null
+    },
+    {
+      "name": "headache",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "missing_symptom",   "symptom": "fever" }
+- {   "type": "missing_symptom",   "symptom": "runny nose" }
+- {   "type": "duplicate_symptom",   "symptom": "headache",   "count": 3 }
+- {   "type": "wrong_symptom_status",   "symptom": "headache",   "expected": "uncertain",   "predicted": "absent" }
+- {   "type": "wrong_duration",   "symptom": "headache",   "expected": null,   "predicted": {     "value": 6,     "unit": "days"   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0840
+LANGUAGE: Swahili
+
+INPUT:
+Nina maumivu wakati wa kukojoa kwa wiki moja, na pia niko kukojoa mara nyingi. Sijui kama nina homa. Sina maumivu ya mgongo. Nina mzio wa ibuprofen.
+
+TARGET:
+{
+  "chief_complaint": "painful urination",
+  "symptoms": [
+    {
+      "name": "painful urination",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "fever",
+      "status": "uncertain",
+      "duration": null
+    },
+    {
+      "name": "back pain",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "frequent urination",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "ibuprofen"
+    ]
+  },
+  "missing_information": [
+    "medications"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "painful urination",
+  "symptoms": [
+    {
+      "name": "painful urination",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "frequent urination",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "fever",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "ibuprofen"
+    ]
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "missing_symptom",   "symptom": "back pain" }
+- {   "type": "wrong_symptom_status",   "symptom": "frequent urination",   "expected": "present",   "predicted": "absent" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0076
+LANGUAGE: Swahili
+
+INPUT:
+Pua yangu imekuwa ikitoka kwa masaa 8. Sina shida ya kukosa pumzi, na sijatumia dawa yoyote.
+
+TARGET:
+{
+  "chief_complaint": "runny nose",
+  "symptoms": [
+    {
+      "name": "runny nose",
+      "status": "present",
+      "duration": {
+        "value": 8,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "shortness of breath",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "runny nose",
+  "symptoms": [
+    {
+      "name": "runny nose",
+      "status": "present",
+      "duration": {
+        "value": 8,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "constipation",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "missing_symptom",   "symptom": "shortness of breath" }
+- {   "type": "extra_symptom",   "symptom": "constipation" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0365
+LANGUAGE: Swahili
+
+INPUT:
+Nina maumivu ya kifua kwa wiki moja, na pia nina maumivu ya mgongo. Sijui kama nina maumivu ya kichwa. Sina kizunguzungu. Sina dawa ninazotumia. Nina mzio kwa ibuprofen.
+
+TARGET:
+{
+  "chief_complaint": "chest pain",
+  "symptoms": [
+    {
+      "name": "chest pain",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "dizziness",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "headache",
+      "status": "uncertain",
+      "duration": null
+    },
+    {
+      "name": "back pain",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "ibuprofen"
+    ]
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{
+  "chief_complaint": "chest pain",
+  "symptoms": [
+    {
+      "name": "chest pain",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "headache",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "dizziness",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "ibuprofen"
+    ]
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "missing_symptom",   "symptom": "back pain" }
+- {   "type": "wrong_symptom_status",   "symptom": "dizziness",   "expected": "absent",   "predicted": "present" }
+- {   "type": "wrong_symptom_status",   "symptom": "headache",   "expected": "uncertain",   "predicted": "present" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0432
+LANGUAGE: Swahili
+
+INPUT:
+Nimekuwa nikishindwa kwenda chooni kwa wiki mbili; sina homa, na ninatumia ibuprofen.
+
+TARGET:
+{
+  "chief_complaint": "constipation",
+  "symptoms": [
+    {
+      "name": "constipation",
+      "status": "present",
+      "duration": {
+        "value": 2,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "fever",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "reported",
+    "items": [
+      "ibuprofen"
+    ]
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "weakness",
+  "symptoms": [
+    {
+      "name": "weakness",
+      "status": "present",
+      "duration": {
+        "value": 2,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "fever",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "reported",
+    "items": [
+      "ibuprofen"
+    ]
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "wrong_chief_complaint",   "expected": "constipation",   "predicted": "weakness" }
+- {   "type": "missing_symptom",   "symptom": "constipation" }
+- {   "type": "extra_symptom",   "symptom": "weakness" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0059
+LANGUAGE: Swahili
+
+INPUT:
+Ninakuna, sina kupele; situmii dawa yoyote na sina mzio ninayojua.
+
+TARGET:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "rash",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "rash",
+  "symptoms": [
+    {
+      "name": "rash",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "redness",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "wrong_chief_complaint",   "expected": "itching",   "predicted": "rash" }
+- {   "type": "missing_symptom",   "symptom": "itching" }
+- {   "type": "extra_symptom",   "symptom": "redness" }
+- {   "type": "wrong_symptom_status",   "symptom": "rash",   "expected": "absent",   "predicted": "present" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0858
+LANGUAGE: Swahili
+
+INPUT:
+Nina kuwasha kwa ngozi kwa masaa 11. Sina upele. Nina homa kwa masaa 12. Sijui kama nina uvimbe.
+
+TARGET:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": {
+        "value": 11,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "rash",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "fever",
+      "status": "present",
+      "duration": {
+        "value": 12,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "swelling",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": {
+        "value": 11,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "rash",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "swelling",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "missing_symptom",   "symptom": "fever" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0108
+LANGUAGE: Swahili
+
+INPUT:
+Nina haja ya kukojoa mara nyingi kwa masaa 4. Pia, nina maumivu wakati wa kukojoa. Sina mzio ninayojua.
+
+TARGET:
+{
+  "chief_complaint": "frequent urination",
+  "symptoms": [
+    {
+      "name": "frequent urination",
+      "status": "present",
+      "duration": {
+        "value": 4,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "painful urination",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "medications"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "frequent urination",
+  "symptoms": [
+    {
+      "name": "frequent urination",
+      "status": "present",
+      "duration": {
+        "value": 4,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "painful urination",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "wrong_symptom_status",   "symptom": "painful urination",   "expected": "present",   "predicted": "absent" }
+- {   "type": "allergy_error",   "expected": {     "status": "none",     "items": []   },   "predicted": {     "status": "unknown",     "items": []   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0984
+LANGUAGE: Swahili
+
+INPUT:
+Nina kuhara kwa 1 saa, sijui kama nina kizunguzungu, na nina mzio wa penisilini.
+
+TARGET:
+{
+  "chief_complaint": "diarrhea",
+  "symptoms": [
+    {
+      "name": "diarrhea",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "dizziness",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "penicillin"
+    ]
+  },
+  "missing_information": [
+    "medications"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "diarrhea",
+  "symptoms": [
+    {
+      "name": "diarrhea",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "dizziness",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "allergy_error",   "expected": {     "status": "reported",     "items": [       "penicillin"     ]   },   "predicted": {     "status": "none",     "items": []   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0460
+LANGUAGE: Swahili
+
+INPUT:
+Nina mshubuko wa ngozi kwa siku 6, pia nina muwasho wa ngozi kwa wiki 1, na nina uvimbe kwa saa 6. Sina dawa ninazotumia, na nina mzio wa penicillin.
+
+TARGET:
+{
+  "chief_complaint": "rash",
+  "symptoms": [
+    {
+      "name": "rash",
+      "status": "present",
+      "duration": {
+        "value": 6,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "swelling",
+      "status": "present",
+      "duration": {
+        "value": 6,
+        "unit": "hours"
+      }
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "penicillin"
+    ]
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{
+  "chief_complaint": "rash",
+  "symptoms": [
+    {
+      "name": "rash",
+      "status": "present",
+      "duration": {
+        "value": 6,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "swelling",
+      "status": "present",
+      "duration": {
+        "value": 6,
+        "unit": "days"
+      }
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "penicillin"
+    ]
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "wrong_duration",   "symptom": "swelling",   "expected": {     "value": 6,     "unit": "hours"   },   "predicted": {     "value": 6,     "unit": "days"   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0089
+LANGUAGE: Swahili
+
+INPUT:
+Nina shida ya kufunga choo na sina hamu ya kula. Sijatapika, lakini sina uhakika kama nina kuharisha. Sijachukua dawa yoyote na sina mzio.
+
+TARGET:
+{
+  "chief_complaint": "constipation",
+  "symptoms": [
+    {
+      "name": "constipation",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "diarrhea",
+      "status": "uncertain",
+      "duration": null
+    },
+    {
+      "name": "vomiting",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "loss of appetite",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "constipation",
+  "symptoms": [
+    {
+      "name": "constipation",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "diarrhea",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "missing_symptom",   "symptom": "loss of appetite" }
+- {   "type": "missing_symptom",   "symptom": "vomiting" }
+- {   "type": "wrong_symptom_status",   "symptom": "diarrhea",   "expected": "uncertain",   "predicted": "present" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0988
+LANGUAGE: Swahili
+
+INPUT:
+Nimekuwa na upele kwa wiki 1 na pia nina maumivu; sina mzio ninayojua.
+
+TARGET:
+{
+  "chief_complaint": "rash",
+  "symptoms": [
+    {
+      "name": "rash",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "pain",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "medications"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "rash",
+  "symptoms": [
+    {
+      "name": "rash",
+      "status": "present",
+      "duration": {
+        "value": 1,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "pain",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "wrong_symptom_status",   "symptom": "pain",   "expected": "present",   "predicted": "absent" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0931
+LANGUAGE: Swahili
+
+INPUT:
+Nimekuwa nikipungukiwa na pumzi kwa siku 5. Sina uchovu. Sijatumia dawa yoyote.
+
+TARGET:
+{
+  "chief_complaint": "shortness of breath",
+  "symptoms": [
+    {
+      "name": "shortness of breath",
+      "status": "present",
+      "duration": {
+        "value": 5,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "fatigue",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": {
+        "value": 5,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "fatigue",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "wrong_chief_complaint",   "expected": "shortness of breath",   "predicted": "itching" }
+- {   "type": "missing_symptom",   "symptom": "shortness of breath" }
+- {   "type": "extra_symptom",   "symptom": "itching" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0230
+LANGUAGE: Swahili
+
+INPUT:
+Kwa wiki 2 nimekuwa nikipata maumivu ninapokuwa nikienda kukojoa, pia nina kukojoa mara kwa mara, sijui kama nina homa, sina maumivu ya mgongo, na ninachukua amoxicillin, sina mzio.
+
+TARGET:
+{
+  "chief_complaint": "painful urination",
+  "symptoms": [
+    {
+      "name": "painful urination",
+      "status": "present",
+      "duration": {
+        "value": 2,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "fever",
+      "status": "uncertain",
+      "duration": null
+    },
+    {
+      "name": "back pain",
+      "status": "absent",
+      "duration": null
+    },
+    {
+      "name": "frequent urination",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "reported",
+    "items": [
+      "amoxicillin"
+    ]
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{
+  "chief_complaint": "painful urination",
+  "symptoms": [
+    {
+      "name": "painful urination",
+      "status": "present",
+      "duration": {
+        "value": 2,
+        "unit": "weeks"
+      }
+    },
+    {
+      "name": "fever",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "reported",
+    "items": [
+      "amoxicillin"
+    ]
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "missing_symptom",   "symptom": "back pain" }
+- {   "type": "missing_symptom",   "symptom": "frequent urination" }
+- {   "type": "allergy_error",   "expected": {     "status": "none",     "items": []   },   "predicted": {     "status": "unknown",     "items": []   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0405
+LANGUAGE: Swahili
+
+INPUT:
+Nina maumivu ya kifua kwa masaa saba, nina kizunguzungu na maumivu ya viungo. Sina dawa ninazotumia na sina mzio yoyote.
+
+TARGET:
+{
+  "chief_complaint": "chest pain",
+  "symptoms": [
+    {
+      "name": "chest pain",
+      "status": "present",
+      "duration": {
+        "value": 7,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "dizziness",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "joint pain",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{
+  "chief_complaint": "chest pain",
+  "symptoms": [
+    {
+      "name": "chest pain",
+      "status": "present",
+      "duration": {
+        "value": 7,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "joint pain",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies",
+    "duration"
+  ]
+}
+
+ERRORS:
+- {   "type": "missing_symptom",   "symptom": "dizziness" }
+- {   "type": "wrong_symptom_status",   "symptom": "joint pain",   "expected": "present",   "predicted": "absent" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0258
+LANGUAGE: Swahili
+
+INPUT:
+Nina maumivu ya kichwa na pia nina kichefuchefu.
+
+TARGET:
+{
+  "chief_complaint": "headache",
+  "symptoms": [
+    {
+      "name": "headache",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "nausea",
+      "status": "present",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{
+  "chief_complaint": "headache",
+  "symptoms": [
+    {
+      "name": "headache",
+      "status": "present",
+      "duration": null
+    },
+    {
+      "name": "nausea",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "wrong_symptom_status",   "symptom": "nausea",   "expected": "present",   "predicted": "absent" }
+
+----------------------------------------------------------------------------
+
+CASE: case_0164
+LANGUAGE: Swahili
+
+INPUT:
+Nimekuwa nikiumwa kwa ngozi kwa muda wa saa 12, na sijui kama nina madoa au uchubuko wa ngozi.
+
+TARGET:
+{
+  "chief_complaint": "itching",
+  "symptoms": [
+    {
+      "name": "itching",
+      "status": "present",
+      "duration": {
+        "value": 12,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "rash",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "medications",
+    "allergies"
+  ]
+}
+
+PREDICTION:
+{"chief_complaint":"runny nose","symptoms":[{"name":"runny nose","status":"present","duration":{"value":12,"unit":"hours"}},{"name":"cough","status":"uncertain","duration":null}],"medications":{"status":"unknown","items":[]},"allergies":{"status":"reported","items":["rhinitis"]}}{"missing_information":["medications","allergies"]}
+
+ERRORS:
+- {   "type": "invalid_json",   "detail": "Prediction could not be parsed." }
+
+----------------------------------------------------------------------------
+
+CASE: case_0871
+LANGUAGE: Swahili
+
+INPUT:
+Nimekuwa na udhaifu kwa masaa 10, na sina uhakika kama nina kizunguzungu. Nina mzio wa penicillin na ninatumia paracetamol.
+
+TARGET:
+{
+  "chief_complaint": "weakness",
+  "symptoms": [
+    {
+      "name": "weakness",
+      "status": "present",
+      "duration": {
+        "value": 10,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "dizziness",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "reported",
+    "items": [
+      "paracetamol"
+    ]
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "penicillin"
+    ]
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{
+  "chief_complaint": "weakness",
+  "symptoms": [
+    {
+      "name": "weakness",
+      "status": "present",
+      "duration": {
+        "value": 10,
+        "unit": "hours"
+      }
+    },
+    {
+      "name": "dizziness",
+      "status": "uncertain",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "unknown",
+    "items": []
+  },
+  "allergies": {
+    "status": "reported",
+    "items": [
+      "penicillin"
+    ]
+  },
+  "missing_information": [
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "medication_error",   "expected": {     "status": "reported",     "items": [       "paracetamol"     ]   },   "predicted": {     "status": "unknown",     "items": []   } }
+
+----------------------------------------------------------------------------
+
+CASE: case_0344
+LANGUAGE: Swahili
+
+INPUT:
+Nina kuharisha kwa siku sita sasa, sina kichefuchefu, situmii dawa yoyote na sina mzio.
+
+TARGET:
+{
+  "chief_complaint": "diarrhea",
+  "symptoms": [
+    {
+      "name": "diarrhea",
+      "status": "present",
+      "duration": {
+        "value": 6,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "nausea",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "none",
+    "items": []
+  },
+  "missing_information": []
+}
+
+PREDICTION:
+{
+  "chief_complaint": "diarrhea",
+  "symptoms": [
+    {
+      "name": "diarrhea",
+      "status": "present",
+      "duration": {
+        "value": 6,
+        "unit": "days"
+      }
+    },
+    {
+      "name": "nausea",
+      "status": "absent",
+      "duration": null
+    }
+  ],
+  "medications": {
+    "status": "none",
+    "items": []
+  },
+  "allergies": {
+    "status": "unknown",
+    "items": []
+  },
+  "missing_information": [
+    "duration",
+    "medications",
+    "allergies"
+  ]
+}
+
+ERRORS:
+- {   "type": "allergy_error",   "expected": {     "status": "none",     "items": []   },   "predicted": {     "status": "unknown",     "items": []   } }
+
+----------------------------------------------------------------------------

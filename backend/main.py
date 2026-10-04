@@ -1,16 +1,25 @@
+import modal
+import json
 from typing import Literal
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from ml.modal_inference import NoorModel
-import json
+
+
+# ============================================================
+# APP
+# ============================================================
+
 app = FastAPI(
     title="Noor Health API",
     version="0.1.0",
 )
 
-noor_model = NoorModel()
+
+# ============================================================
+# CORS
+# ============================================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -92,27 +101,19 @@ def health():
 def structure_intake(
     request: IntakeRequest,
 ):
+    NoorModel = modal.Cls.from_name(
+        "noor-health-inference",
+        "NoorModel",
+    )
+
+    noor_model = NoorModel()
+
     result = noor_model.predict.remote(
         text=request.text,
         language=request.language,
     )
 
-    return ClinicalIntake.model_validate(
-        result
-    )
-
-@app.local_entrypoint()
-def main():
-    result = NoorModel().predict.remote(
-        text=(
-            "I've had a cough for four days. "
-            "I don't have a fever. "
-            "I'm not sure if I'm short of breath. "
-            "I've been taking ibuprofen."
-        ),
-        language="en",
-    )
-
+    print("\n===== MODAL PREDICTION =====")
     print(
         json.dumps(
             result,
@@ -120,3 +121,10 @@ def main():
             ensure_ascii=False,
         )
     )
+    print("============================\n")
+
+    validated_result = ClinicalIntake.model_validate(
+        result
+    )
+
+    return validated_result
