@@ -1,6 +1,6 @@
 {
   "version": "v1",
-  "status": "draft, needs native-speaker review",
+  "status": "ar_eg reviewed by a native speaker (Egyptian Arabic); other languages draft",
   "languages": [
     "en",
     "de",
@@ -145,14 +145,13 @@
       },
       "ar_eg": {
         "phrases": [
+          "ضيق في النفس",
           "مش عارف آخد نفسي",
-          "نفسي مقطوع",
-          "نهجان"
+          "نفسي مقطوع"
         ],
         "match": [
           "اخد نفسي",
           "نفسي مقطوع",
-          "نهجان",
           "ضيق في النفس"
         ]
       }
@@ -224,7 +223,8 @@
         ],
         "match": [
           "fieber",
-          "temperatur"
+          "temperatur",
+          "fiebrig"
         ]
       },
       "ar_msa": {
@@ -610,8 +610,7 @@
       "de": {
         "phrases": [
           "Verstopfung",
-          "ich kann nicht aufs Klo",
-          "ich war seit Tagen nicht auf dem Klo"
+          "ich kann nicht aufs Klo"
         ],
         "match": [
           "verstopfung",
@@ -689,6 +688,7 @@
     "loss of appetite": {
       "en": {
         "phrases": [
+          "loss of appetite",
           "no appetite",
           "I don't feel like eating",
           "I've lost my appetite",
@@ -702,8 +702,8 @@
       },
       "de": {
         "phrases": [
-          "keinen Appetit",
           "Appetitlosigkeit",
+          "keinen Appetit",
           "keinen Hunger"
         ],
         "match": [
@@ -1116,11 +1116,12 @@
         "phrases": [
           "Schwellung",
           "geschwollen",
-          "dick geworden"
+          "angeschwollen"
         ],
         "match": [
           "schwell",
-          "geschwoll"
+          "geschwoll",
+          "schwoll"
         ]
       },
       "ar_msa": {
@@ -1564,6 +1565,8 @@
     "'pain' is generic and its match patterns overlap with every specific pain; the checker treats it as weak evidence only.",
     "German 'verstopft' is deliberately NOT a match pattern, because 'die Nase ist verstopft' is a stuffy nose, not constipation.",
     "German 'schlecht' alone is NOT a nausea pattern, because of 'ich krieg schlecht Luft'.",
-    "Egyptian 'نفسي' alone is NOT a pattern: it appears in nausea (غمم نفس), appetite (نفسي مسدودة) and breath (آخد نفسي)."
+    "Egyptian 'نفسي' alone is NOT a pattern: it appears in nausea (غمم نفس), appetite (نفسي مسدودة) and breath (آخد نفسي).",
+    "Egyptian 'دايخ/دايخة' is mapped to dizziness only (literal meaning). Colloquially it may also describe nausea; this ambiguity is a known limitation.",
+    "'نهجان' was removed from ar_eg after native-speaker review (not used in Egyptian Arabic)."
   ]
 }

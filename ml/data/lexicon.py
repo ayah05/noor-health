@@ -101,6 +101,15 @@ def validate_lexicon(lex: dict) -> list[str]:
                         f"(expected {normalize(pattern)!r})"
                     )
 
+    # Self-consistency: every generation phrase must be found by its own
+    # match patterns, otherwise generated sentences fail the check.
+    for name, per_lang in lex["symptoms"].items():
+        for lang in languages:
+            entry = per_lang.get(lang) or {}
+            for phrase in entry.get("phrases", []):
+                if not any(p in normalize(phrase) for p in entry.get("match", [])):
+                    errors.append(f"{name}/{lang}: phrase {phrase!r} is not matched by its own match patterns")
+
     for drug in set(MEDICATIONS) | set(ALLERGIES):
         if drug not in lex["drug_names"]:
             errors.append(f"drug {drug!r} missing from drug_names")
@@ -130,6 +139,21 @@ def validate_lexicon(lex: dict) -> list[str]:
 # DETERMINISTIC CHECKS
 # ============================================================
 
+_LATIN = re.compile(r"[a-z]")
+
+
+def contains_term(text: str, term: str) -> bool:
+    """
+    Substring match on normalized text. Latin-script terms must match as
+    whole words, so that e.g. 'ASS' (aspirin) is not found in 'Wasserlassen'.
+    Arabic terms match as substrings, because of attached prefixes (ال، ب، و).
+    """
+    text, term = normalize(text), normalize(term)
+    if _LATIN.search(term):
+        return re.search(rf"(?<![a-zäöüß]){re.escape(term)}(?![a-zäöüß])", text) is not None
+    return term in text
+
+
 def symptom_mentioned(utterance: str, symptom: str, language: str, lex: dict) -> bool:
     text = normalize(utterance)
     patterns = lex["symptoms"][symptom][language]["match"]
@@ -137,14 +161,13 @@ def symptom_mentioned(utterance: str, symptom: str, language: str, lex: dict) ->
 
 
 def drug_mentioned(utterance: str, drug: str, language: str, lex: dict) -> bool:
-    text = normalize(utterance)
     # Accept the drug name from any language: code-switching is common.
     names = {
-        normalize(n)
+        n
         for names_per_lang in lex["drug_names"][drug].values()
         for n in names_per_lang
     }
-    return any(n in text for n in names)
+    return any(contains_term(utterance, n) for n in names)
 
 
 def check_sample(sample: dict, lex: dict) -> list[str]:
