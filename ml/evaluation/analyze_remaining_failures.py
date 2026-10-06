@@ -1128,7 +1128,7 @@ def main():
     default_input = (
         project_root
         / "results"
-        / "evaluation"
+        / "synthetic_test"
         / "comparison"
         / "base_vs_lora_both_wrong.jsonl"
     )
@@ -1136,7 +1136,7 @@ def main():
     default_output_dir = (
         project_root
         / "results"
-        / "evaluation"
+        / "synthetic_test"
         / "failure_analysis"
     )
 

@@ -1,0 +1,1569 @@
+{
+  "version": "v1",
+  "status": "draft, needs native-speaker review",
+  "languages": [
+    "en",
+    "de",
+    "ar_msa",
+    "ar_eg"
+  ],
+  "conventions": {
+    "chief_complaint": "Always the first entry in symptoms. In utterances it may appear anywhere, ideally with a cue from chief_complaint_cues.",
+    "coordinated_duration": "'X and Y for 3 days' (or a fronted duration: 'for 3 days I have X and Y') assigns the duration to BOTH symptoms.",
+    "relative_time": "Mapped to the value in time_expressions (e.g. 'since yesterday' = 1 day).",
+    "vague_time": "Duration is null. The model must never invent a number.",
+    "approximate_time": "'about a week' keeps the number (1 week).",
+    "brand_names": "Always labelled with the active ingredient.",
+    "match_field": "Lowercase, normalized substrings used ONLY for deterministic checking, not for generation. Arabic is normalized (no diacritics, alef/taa marbuta/yaa unified) before matching."
+  },
+  "symptoms": {
+    "cough": {
+      "en": {
+        "phrases": [
+          "a cough",
+          "coughing",
+          "I keep coughing"
+        ],
+        "match": [
+          "cough"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Husten",
+          "ich huste",
+          "Hustenreiz"
+        ],
+        "match": [
+          "husten",
+          "huste",
+          "hust"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "سعال",
+          "أسعل"
+        ],
+        "match": [
+          "سعال",
+          "اسعل",
+          "يسعل",
+          "كحه"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "كحة",
+          "بكح",
+          "عمال أكح"
+        ],
+        "match": [
+          "كحه",
+          "بكح",
+          "اكح"
+        ]
+      }
+    },
+    "sore throat": {
+      "en": {
+        "phrases": [
+          "a sore throat",
+          "my throat hurts",
+          "a scratchy throat"
+        ],
+        "match": [
+          "throat"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Halsschmerzen",
+          "Halsweh",
+          "mein Hals tut weh",
+          "Halskratzen"
+        ],
+        "match": [
+          "hals"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "ألم في الحلق",
+          "التهاب في الحلق"
+        ],
+        "match": [
+          "حلق",
+          "حنجر"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "زوري واجعني",
+          "زوري بيوجعني",
+          "التهاب في الزور"
+        ],
+        "match": [
+          "زور"
+        ]
+      }
+    },
+    "shortness of breath": {
+      "en": {
+        "phrases": [
+          "shortness of breath",
+          "I can't breathe properly",
+          "I get out of breath"
+        ],
+        "match": [
+          "breath",
+          "breathe"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Atemnot",
+          "ich krieg schlecht Luft",
+          "ich bin kurzatmig",
+          "Luftnot"
+        ],
+        "match": [
+          "atem",
+          "kurzatm",
+          "luft"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "ضيق في التنفس",
+          "صعوبة في التنفس"
+        ],
+        "match": [
+          "تنفس",
+          "ضيق النفس"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "مش عارف آخد نفسي",
+          "نفسي مقطوع",
+          "نهجان"
+        ],
+        "match": [
+          "اخد نفسي",
+          "نفسي مقطوع",
+          "نهجان",
+          "ضيق في النفس"
+        ]
+      }
+    },
+    "runny nose": {
+      "en": {
+        "phrases": [
+          "a runny nose",
+          "my nose is running",
+          "the sniffles"
+        ],
+        "match": [
+          "nose",
+          "sniffl"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Schnupfen",
+          "eine laufende Nase",
+          "die Nase läuft"
+        ],
+        "match": [
+          "schnupfen",
+          "nase"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "سيلان في الأنف",
+          "رشح"
+        ],
+        "match": [
+          "سيلان",
+          "رشح",
+          "انف"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "مناخيري بتنقط",
+          "رشح",
+          "زكام"
+        ],
+        "match": [
+          "مناخير",
+          "رشح",
+          "زكام"
+        ]
+      }
+    },
+    "fever": {
+      "en": {
+        "phrases": [
+          "a fever",
+          "a temperature",
+          "I feel feverish"
+        ],
+        "match": [
+          "fever",
+          "temperature"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Fieber",
+          "erhöhte Temperatur",
+          "ich fühl mich fiebrig"
+        ],
+        "match": [
+          "fieber",
+          "temperatur"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "حمى",
+          "حرارة مرتفعة",
+          "سخونة"
+        ],
+        "match": [
+          "حمي",
+          "حراره",
+          "سخونه"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "سخونية",
+          "جسمي سخن",
+          "حرارة"
+        ],
+        "match": [
+          "سخون",
+          "سخن",
+          "حراره"
+        ]
+      }
+    },
+    "fatigue": {
+      "en": {
+        "phrases": [
+          "tired",
+          "exhausted",
+          "worn out"
+        ],
+        "match": [
+          "tired",
+          "exhaust",
+          "fatigue",
+          "worn out"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "müde",
+          "erschöpft",
+          "Müdigkeit"
+        ],
+        "match": [
+          "müde",
+          "erschöpf",
+          "müdigkeit"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "تعب",
+          "إرهاق",
+          "أشعر بالتعب"
+        ],
+        "match": [
+          "تعب",
+          "ارهاق",
+          "مرهق"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "تعبان",
+          "مرهق",
+          "هلكان"
+        ],
+        "match": [
+          "تعبان",
+          "مرهق",
+          "هلكان"
+        ]
+      }
+    },
+    "headache": {
+      "en": {
+        "phrases": [
+          "a headache",
+          "my head hurts",
+          "my head is pounding"
+        ],
+        "match": [
+          "headache",
+          "head hurt",
+          "head is pounding",
+          "head pain"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Kopfschmerzen",
+          "Kopfweh",
+          "mir brummt der Schädel"
+        ],
+        "match": [
+          "kopf",
+          "schädel"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "صداع",
+          "ألم في الرأس"
+        ],
+        "match": [
+          "صداع",
+          "راس"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "صداع",
+          "راسي وجعاني",
+          "راسي مصدعة"
+        ],
+        "match": [
+          "صداع",
+          "راسي",
+          "مصدع"
+        ]
+      }
+    },
+    "chest pain": {
+      "en": {
+        "phrases": [
+          "chest pain",
+          "my chest hurts",
+          "pain in my chest"
+        ],
+        "match": [
+          "chest"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Brustschmerzen",
+          "Schmerzen in der Brust",
+          "Druck auf der Brust"
+        ],
+        "match": [
+          "brust"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "ألم في الصدر"
+        ],
+        "match": [
+          "صدر"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "صدري بيوجعني",
+          "وجع في صدري"
+        ],
+        "match": [
+          "صدر"
+        ]
+      }
+    },
+    "abdominal pain": {
+      "en": {
+        "phrases": [
+          "a stomach ache",
+          "stomach pain",
+          "my belly hurts",
+          "stomach cramps",
+          "a tummy ache"
+        ],
+        "match": [
+          "stomach",
+          "belly",
+          "abdom",
+          "tummy"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Bauchschmerzen",
+          "Bauchweh",
+          "Bauchkrämpfe",
+          "Magenschmerzen"
+        ],
+        "match": [
+          "bauch",
+          "magen"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "ألم في البطن",
+          "مغص"
+        ],
+        "match": [
+          "بطن",
+          "مغص"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "مغص",
+          "بطني بتوجعني",
+          "وجع في بطني"
+        ],
+        "match": [
+          "مغص",
+          "بطن"
+        ]
+      }
+    },
+    "nausea": {
+      "en": {
+        "phrases": [
+          "nausea",
+          "I feel sick",
+          "I feel nauseous",
+          "I feel queasy"
+        ],
+        "match": [
+          "nause",
+          "feel sick",
+          "queasy"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Übelkeit",
+          "mir ist schlecht",
+          "mir ist übel"
+        ],
+        "match": [
+          "übel",
+          "mir ist schlecht",
+          "mir ist so schlecht"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "غثيان",
+          "أشعر بالغثيان"
+        ],
+        "match": [
+          "غثيان"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "غمم نفس",
+          "نفسي غامة",
+          "حاسس إني عايز أرجع"
+        ],
+        "match": [
+          "غمم",
+          "غامه",
+          "غثيان",
+          "عايز ارجع",
+          "عايزه ارجع"
+        ]
+      }
+    },
+    "vomiting": {
+      "en": {
+        "phrases": [
+          "vomiting",
+          "throwing up",
+          "I threw up"
+        ],
+        "match": [
+          "vomit",
+          "threw up",
+          "throw up",
+          "throwing up"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Erbrechen",
+          "ich musste brechen",
+          "ich hab mich übergeben"
+        ],
+        "match": [
+          "erbrech",
+          "erbroch",
+          "brech",
+          "broch",
+          "kotz",
+          "übergeb"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "قيء",
+          "تقيؤ",
+          "أتقيأ"
+        ],
+        "match": [
+          "قيء",
+          "تقيا",
+          "تقيؤ",
+          "استفراغ"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "ترجيع",
+          "رجعت",
+          "برجع"
+        ],
+        "match": [
+          "رجعت",
+          "برجع",
+          "ترجيع",
+          "استفرغ"
+        ]
+      }
+    },
+    "diarrhea": {
+      "en": {
+        "phrases": [
+          "diarrhea",
+          "diarrhoea",
+          "the runs",
+          "loose stools"
+        ],
+        "match": [
+          "diarrh",
+          "the runs",
+          "loose stool"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Durchfall",
+          "dünnen Stuhl",
+          "flüssigen Stuhlgang"
+        ],
+        "match": [
+          "durchfall",
+          "dünnen stuhl",
+          "dünner stuhl",
+          "flüssigen stuhl",
+          "flüssiger stuhl"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "إسهال"
+        ],
+        "match": [
+          "اسهال"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "إسهال",
+          "بطني سايبة"
+        ],
+        "match": [
+          "اسهال",
+          "سايبه"
+        ]
+      }
+    },
+    "constipation": {
+      "en": {
+        "phrases": [
+          "constipation",
+          "I'm constipated",
+          "I can't go to the toilet"
+        ],
+        "match": [
+          "constipat",
+          "can't go to the toilet",
+          "cant go to the toilet",
+          "haven't gone"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Verstopfung",
+          "ich kann nicht aufs Klo",
+          "ich war seit Tagen nicht auf dem Klo"
+        ],
+        "match": [
+          "verstopfung",
+          "nicht aufs klo",
+          "nicht auf dem klo"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "إمساك"
+        ],
+        "match": [
+          "امساك"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "إمساك",
+          "مش عارف أدخل الحمام"
+        ],
+        "match": [
+          "امساك",
+          "مش عارف ادخل الحمام"
+        ]
+      }
+    },
+    "dizziness": {
+      "en": {
+        "phrases": [
+          "dizzy",
+          "dizziness",
+          "lightheaded",
+          "the room is spinning"
+        ],
+        "match": [
+          "dizz",
+          "lightheaded",
+          "light-headed",
+          "spinning"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Schwindel",
+          "mir ist schwindelig",
+          "mir ist schwummrig"
+        ],
+        "match": [
+          "schwind",
+          "schwumm"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "دوار",
+          "دوخة"
+        ],
+        "match": [
+          "دوار",
+          "دوخ"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "دوخة",
+          "دايخ",
+          "بدوخ"
+        ],
+        "match": [
+          "دوخ",
+          "دايخ"
+        ]
+      }
+    },
+    "loss of appetite": {
+      "en": {
+        "phrases": [
+          "no appetite",
+          "I don't feel like eating",
+          "I've lost my appetite",
+          "I'm not hungry"
+        ],
+        "match": [
+          "appetite",
+          "feel like eating",
+          "not hungry"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "keinen Appetit",
+          "Appetitlosigkeit",
+          "keinen Hunger"
+        ],
+        "match": [
+          "appetit",
+          "hunger"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "فقدان الشهية",
+          "لا أشتهي الطعام"
+        ],
+        "match": [
+          "شهيه",
+          "شهيت",
+          "اشتهي"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "نفسي مسدودة",
+          "مليش نفس للأكل",
+          "مش قادر آكل"
+        ],
+        "match": [
+          "مسدود",
+          "مليش نفس",
+          "نفس للاكل",
+          "مش قادر اكل"
+        ]
+      }
+    },
+    "weakness": {
+      "en": {
+        "phrases": [
+          "weak",
+          "weakness",
+          "I have no strength"
+        ],
+        "match": [
+          "weak",
+          "strength"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "schwach",
+          "Schwäche",
+          "kraftlos"
+        ],
+        "match": [
+          "schwach",
+          "schwäch",
+          "kraftlos"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "ضعف",
+          "وهن"
+        ],
+        "match": [
+          "ضعف",
+          "وهن"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "ضعيف",
+          "مش قادر أقف",
+          "مفيش حيل"
+        ],
+        "match": [
+          "ضعيف",
+          "حيل",
+          "مش قادر اقف"
+        ]
+      }
+    },
+    "back pain": {
+      "en": {
+        "phrases": [
+          "back pain",
+          "my back hurts",
+          "lower back pain"
+        ],
+        "match": [
+          "back pain",
+          "my back",
+          "back hurt",
+          "back is"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Rückenschmerzen",
+          "mein Rücken tut weh",
+          "Kreuzschmerzen"
+        ],
+        "match": [
+          "rücken",
+          "kreuz"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "ألم في الظهر"
+        ],
+        "match": [
+          "ظهر"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "ضهري بيوجعني",
+          "وجع في ضهري"
+        ],
+        "match": [
+          "ضهر"
+        ]
+      }
+    },
+    "joint pain": {
+      "en": {
+        "phrases": [
+          "joint pain",
+          "my joints hurt",
+          "aching joints"
+        ],
+        "match": [
+          "joint"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Gelenkschmerzen",
+          "die Gelenke tun weh"
+        ],
+        "match": [
+          "gelenk"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "ألم في المفاصل"
+        ],
+        "match": [
+          "مفاصل",
+          "مفصل"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "مفاصلي بتوجعني",
+          "وجع في المفاصل"
+        ],
+        "match": [
+          "مفاصل"
+        ]
+      }
+    },
+    "painful urination": {
+      "en": {
+        "phrases": [
+          "it burns when I pee",
+          "painful urination",
+          "it hurts when I pee"
+        ],
+        "match": [
+          "burn",
+          "painful urination",
+          "hurts when i pee",
+          "pain when i pee",
+          "sting",
+          "painful when i urinate",
+          "pain when i urinate",
+          "pain when urinating",
+          "painful to urinate",
+          "urinating is painful",
+          "urination is painful",
+          "hurts to pee",
+          "hurts when i urinate",
+          "it's painful when i urinate",
+          "urinating hurts",
+          "painful when i pee",
+          "painful when i go",
+          "hurts when i go",
+          "urination has been painful"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Brennen beim Wasserlassen",
+          "es brennt beim Pinkeln",
+          "Schmerzen beim Wasserlassen"
+        ],
+        "match": [
+          "brenn",
+          "schmerzen beim wasserlassen",
+          "schmerzen beim pinkeln",
+          "beim wasserlassen",
+          "wasserlassen schmerz",
+          "schmerzhaft"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "ألم عند التبول",
+          "حرقة في البول"
+        ],
+        "match": [
+          "حرق",
+          "الم عند التبول",
+          "الم اثناء التبول",
+          "التبول مؤلم",
+          "مؤلم عند التبول",
+          "مولم",
+          "مؤلم"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "حرقان في البول",
+          "حرقان وأنا بعمل حمام"
+        ],
+        "match": [
+          "حرقان",
+          "حرقه"
+        ]
+      }
+    },
+    "frequent urination": {
+      "en": {
+        "phrases": [
+          "I need to pee a lot",
+          "frequent urination",
+          "I keep having to go to the toilet"
+        ],
+        "match": [
+          "pee a lot",
+          "peeing a lot",
+          "frequent urination",
+          "pee all the time",
+          "peeing all the time",
+          "to the toilet",
+          "have to pee",
+          "go to the bathroom",
+          "urinating frequently",
+          "urinate frequently",
+          "urinating a lot",
+          "urinate often",
+          "urinating often",
+          "frequently urinat",
+          "urinate a lot"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "ich muss ständig aufs Klo",
+          "häufiger Harndrang",
+          "ich muss oft pinkeln"
+        ],
+        "match": [
+          "harndrang",
+          "ständig aufs klo",
+          "oft aufs klo",
+          "oft pinkeln",
+          "ständig pinkeln",
+          "häufig urinieren",
+          "oft urinieren",
+          "häufiges wasserlassen",
+          "häufig wasserlassen",
+          "häufig zur toilette",
+          "oft zur toilette",
+          "häufig auf die toilette",
+          "häufiger urinieren"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "كثرة التبول",
+          "التبول المتكرر"
+        ],
+        "match": [
+          "كثره التبول",
+          "التبول المتكرر",
+          "تبول متكرر",
+          "التبول كثير",
+          "اتبول كثير",
+          "اتبول بكثره",
+          "التبول بشكل متكرر",
+          "اتبول بشكل متكرر",
+          "تكرار التبول",
+          "تكرر التبول"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "بدخل الحمام كتير",
+          "بعمل حمام كتير"
+        ],
+        "match": [
+          "الحمام كتير",
+          "حمام كتير"
+        ]
+      }
+    },
+    "rash": {
+      "en": {
+        "phrases": [
+          "a rash",
+          "red spots on my skin",
+          "a skin rash"
+        ],
+        "match": [
+          "rash",
+          "spots"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Ausschlag",
+          "rote Flecken auf der Haut"
+        ],
+        "match": [
+          "ausschlag",
+          "flecken"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "طفح جلدي",
+          "بقع حمراء"
+        ],
+        "match": [
+          "طفح",
+          "بقع"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "طفح",
+          "حبوب في جلدي",
+          "حبوب حمرا"
+        ],
+        "match": [
+          "طفح",
+          "حبوب"
+        ]
+      }
+    },
+    "itching": {
+      "en": {
+        "phrases": [
+          "itching",
+          "itchy",
+          "I can't stop scratching"
+        ],
+        "match": [
+          "itch",
+          "scratch"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Juckreiz",
+          "es juckt",
+          "juckende Haut"
+        ],
+        "match": [
+          "juck"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "حكة",
+          "أشعر بالحكة"
+        ],
+        "match": [
+          "حكه"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "هرش",
+          "جسمي بيهرشني",
+          "أكلان"
+        ],
+        "match": [
+          "هرش",
+          "اكلان",
+          "حكه"
+        ]
+      }
+    },
+    "swelling": {
+      "en": {
+        "phrases": [
+          "swelling",
+          "swollen",
+          "puffy"
+        ],
+        "match": [
+          "swell",
+          "swoll",
+          "puffy"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Schwellung",
+          "geschwollen",
+          "dick geworden"
+        ],
+        "match": [
+          "schwell",
+          "geschwoll"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "تورم",
+          "انتفاخ"
+        ],
+        "match": [
+          "ورم",
+          "انتفاخ"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "وارم",
+          "ورم",
+          "منفوخ"
+        ],
+        "match": [
+          "ورم",
+          "وارم",
+          "منفوخ"
+        ]
+      }
+    },
+    "pain": {
+      "en": {
+        "phrases": [
+          "it hurts",
+          "pain",
+          "it's sore"
+        ],
+        "match": [
+          "hurt",
+          "pain",
+          "sore",
+          "ache"
+        ]
+      },
+      "de": {
+        "phrases": [
+          "Schmerzen",
+          "es tut weh"
+        ],
+        "match": [
+          "schmerz",
+          "tut weh"
+        ]
+      },
+      "ar_msa": {
+        "phrases": [
+          "ألم",
+          "وجع"
+        ],
+        "match": [
+          "الم",
+          "وجع"
+        ]
+      },
+      "ar_eg": {
+        "phrases": [
+          "وجع",
+          "بيوجعني"
+        ],
+        "match": [
+          "وجع",
+          "بيوجع",
+          "بتوجع"
+        ]
+      }
+    }
+  },
+  "drug_names": {
+    "paracetamol": {
+      "en": [
+        "paracetamol",
+        "Panadol",
+        "Tylenol",
+        "acetaminophen"
+      ],
+      "de": [
+        "Paracetamol",
+        "ben-u-ron"
+      ],
+      "ar_msa": [
+        "باراسيتامول",
+        "بنادول"
+      ],
+      "ar_eg": [
+        "بنادول",
+        "باراسيتامول",
+        "سيتال"
+      ]
+    },
+    "ibuprofen": {
+      "en": [
+        "ibuprofen",
+        "Advil",
+        "Nurofen",
+        "Brufen"
+      ],
+      "de": [
+        "Ibuprofen",
+        "Ibu",
+        "Nurofen"
+      ],
+      "ar_msa": [
+        "إيبوبروفين",
+        "بروفين"
+      ],
+      "ar_eg": [
+        "بروفين",
+        "إيبوبروفين"
+      ]
+    },
+    "aspirin": {
+      "en": [
+        "aspirin"
+      ],
+      "de": [
+        "Aspirin",
+        "ASS"
+      ],
+      "ar_msa": [
+        "أسبرين"
+      ],
+      "ar_eg": [
+        "أسبرين",
+        "اسبوسيد"
+      ]
+    },
+    "amoxicillin": {
+      "en": [
+        "amoxicillin",
+        "Amoxil"
+      ],
+      "de": [
+        "Amoxicillin",
+        "Amoxi"
+      ],
+      "ar_msa": [
+        "أموكسيسيلين"
+      ],
+      "ar_eg": [
+        "أموكسيل",
+        "أموكسيسيلين"
+      ]
+    },
+    "penicillin": {
+      "en": [
+        "penicillin"
+      ],
+      "de": [
+        "Penicillin"
+      ],
+      "ar_msa": [
+        "بنسلين",
+        "بنسيلين"
+      ],
+      "ar_eg": [
+        "بنسلين",
+        "بنسيلين"
+      ]
+    }
+  },
+  "time_expressions": {
+    "en": [
+      {
+        "text": "since yesterday",
+        "value": 1,
+        "unit": "days",
+        "kind": "relative"
+      },
+      {
+        "text": "since the day before yesterday",
+        "value": 2,
+        "unit": "days",
+        "kind": "relative"
+      },
+      {
+        "text": "since last week",
+        "value": 1,
+        "unit": "weeks",
+        "kind": "relative"
+      },
+      {
+        "text": "for about a week",
+        "value": 1,
+        "unit": "weeks",
+        "kind": "approximate"
+      },
+      {
+        "text": "since this morning",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "since last night",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "for a few days",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "for a while",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "lately",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "since Monday",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "since the weekend",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      }
+    ],
+    "de": [
+      {
+        "text": "seit gestern",
+        "value": 1,
+        "unit": "days",
+        "kind": "relative"
+      },
+      {
+        "text": "seit vorgestern",
+        "value": 2,
+        "unit": "days",
+        "kind": "relative"
+      },
+      {
+        "text": "seit letzter Woche",
+        "value": 1,
+        "unit": "weeks",
+        "kind": "relative"
+      },
+      {
+        "text": "seit ungefähr einer Woche",
+        "value": 1,
+        "unit": "weeks",
+        "kind": "approximate"
+      },
+      {
+        "text": "seit heute morgen",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "seit gestern Abend",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "seit ein paar Tagen",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "seit einiger Zeit",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "in letzter Zeit",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "seit Montag",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "seit dem Wochenende",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      }
+    ],
+    "ar_msa": [
+      {
+        "text": "منذ الأمس",
+        "value": 1,
+        "unit": "days",
+        "kind": "relative"
+      },
+      {
+        "text": "منذ أول أمس",
+        "value": 2,
+        "unit": "days",
+        "kind": "relative"
+      },
+      {
+        "text": "منذ الأسبوع الماضي",
+        "value": 1,
+        "unit": "weeks",
+        "kind": "relative"
+      },
+      {
+        "text": "منذ الصباح",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "منذ بضعة أيام",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "منذ فترة",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "مؤخرًا",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      }
+    ],
+    "ar_eg": [
+      {
+        "text": "من امبارح",
+        "value": 1,
+        "unit": "days",
+        "kind": "relative"
+      },
+      {
+        "text": "من أول امبارح",
+        "value": 2,
+        "unit": "days",
+        "kind": "relative"
+      },
+      {
+        "text": "من الأسبوع اللي فات",
+        "value": 1,
+        "unit": "weeks",
+        "kind": "relative"
+      },
+      {
+        "text": "من الصبح",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "من كام يوم",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "بقالي فترة",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      },
+      {
+        "text": "اليومين دول",
+        "value": null,
+        "unit": null,
+        "kind": "vague"
+      }
+    ]
+  },
+  "chief_complaint_cues": {
+    "en": [
+      "the main reason I'm here is",
+      "mostly I came because of",
+      "what worries me most is",
+      "my main problem is"
+    ],
+    "de": [
+      "eigentlich bin ich wegen ... hier",
+      "hauptsächlich geht es um",
+      "am schlimmsten ist",
+      "vor allem"
+    ],
+    "ar_msa": [
+      "جئت بسبب",
+      "المشكلة الأساسية هي",
+      "أكثر ما يقلقني هو"
+    ],
+    "ar_eg": [
+      "أنا جاي عشان",
+      "أهم حاجة",
+      "اللي تاعبني أكتر"
+    ]
+  },
+  "uncertainty_cues": {
+    "en": [
+      "not sure if",
+      "maybe",
+      "I might have",
+      "I don't know if"
+    ],
+    "de": [
+      "weiß nicht ob",
+      "vielleicht",
+      "bin mir nicht sicher ob"
+    ],
+    "ar_msa": [
+      "لست متأكدًا إن كان",
+      "ربما",
+      "لا أعرف إن كان"
+    ],
+    "ar_eg": [
+      "مش عارف إذا كان",
+      "مش متأكد",
+      "يمكن"
+    ]
+  },
+  "review_notes": [
+    "Egyptian brand names سيتال (Cetal, paracetamol) and اسبوسيد (Aspocid, aspirin) are from memory; please verify.",
+    "'pain' is generic and its match patterns overlap with every specific pain; the checker treats it as weak evidence only.",
+    "German 'verstopft' is deliberately NOT a match pattern, because 'die Nase ist verstopft' is a stuffy nose, not constipation.",
+    "German 'schlecht' alone is NOT a nausea pattern, because of 'ich krieg schlecht Luft'.",
+    "Egyptian 'نفسي' alone is NOT a pattern: it appears in nausea (غمم نفس), appetite (نفسي مسدودة) and breath (آخد نفسي)."
+  ]
+}

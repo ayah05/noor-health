@@ -1,3 +1,136 @@
+
+Claude hat die Antwort abgeschlossen
+5 Befehle ausgeführt, datei erstellt, dateien geteilt
+Das Lexikon ist fertig, zusammen mit einem Prüfmodul, das ohne GPT auskommt.
+
+data/lexicon/lexicon_v1.json enthält für alle 24 Symptome in Englisch, Deutsch, Hocharabisch und Ägyptisch zwei Listen. Die phrases (insgesamt 260) sind die umgangssprachlichen Formulierungen, die der Generator später zufällig bekommt, z.B. "es brennt beim Pinkeln", "Schnupfen", "زوري واجعني". Die match-Muster sind kurze Wortstämme für die automatische Prüfung. Dazu kommen Markennamen pro Wirkstoff, vage und relative Zeitangaben mit festen Labels ("seit gestern" = 1 Tag, "seit heute morgen" = null), Signalwörter für die Hauptbeschwerde, Unsicherheitsformulierungen und die Label-Konventionen an einer Stelle.
+
+ml/data/lexicon.py ersetzt den zirkulären GPT-Check: Es prüft für jeden Satz, ob jedes Symptom und Medikament aus dem Label wirklich darin vorkommt. Arabisch wird dabei normalisiert (keine Vokalzeichen, einheitliches Alif usw.), damit Schreibvarianten nicht zu Fehlalarmen führen.
+
+Ich habe den Check direkt auf deine Trainingsdaten angewendet, und er hat sofort Lücken im Lexikon gezeigt: Deine GPT-Sätze sind sehr formell ("urinating frequently", "häufig urinieren", "تكرار التبول"), und meine ersten Muster waren zu umgangssprachlich. Nach dem Ergänzen bestehen jetzt 99,6 % (Englisch), 100 % (Deutsch) und 99,6 % (Hocharabisch). Das zeigt, dass das Lexikon beides abdeckt, formell und umgangssprachlich.
+
+Ein paar Muster habe ich bewusst nicht aufgenommen, weil sie zu Verwechslungen führen. Die Begründungen stehen in review_notes:
+
+"verstopft" fehlt bei Verstopfung, weil "die Nase ist verstopft" etwas anderes meint.
+"schlecht" allein fehlt bei Übelkeit, wegen "ich krieg schlecht Luft".
+"نفسي" allein fehlt, weil es im Ägyptischen bei Übelkeit, Appetit und Atmung vorkommt.
+Was du prüfen solltest, vor allem beim Ägyptischen: ob die Formulierungen natürlich klingen und ob dir weitere einfallen. Zwei ägyptische Markennamen habe ich aus dem Gedächtnis eingetragen, سيتال für Paracetamol und اسبوسيد für Aspirin. Bitte verifizieren.
+
+Eine Sache, die ich offen sagen muss: Ich habe sowohl den Testsatz als auch dieses Lexikon geschrieben. Gängige Wörter wie "pinkeln" oder "Panadol" stehen deshalb in beiden. Das ist kein Kopieren von Testsätzen, diese Wörter gehören einfach in jedes vernünftige Lexikon, aber die Verbesserung auf dem Testsatz wird dadurch etwas zu optimistisch ausfallen. Am saubersten ist es, wenn du nach dem Neutraining selbst 30 bis 50 neue Sätze schreibst, ohne vorher ins Lexikon zu schauen. Das steht auch als Limitation in der README.
+
+Wenn du mit dem Lexikon zufrieden bist, ist der nächste Schritt der Umbau von generate_utterances.py: Lexikon-Formulierungen und Zeitangaben zufällig in den Prompt geben, Reihenfolge variieren, gemeinsame Dauern erlauben und Speech-Augmentierung hinzufügen.
+
+
+Lexicon v1
+Code·JSON 
+
+Readme
+Dokument·MD 
+
+Lexicon
+PY 
+1791271261381_image.png
+1791271296016_image.png
+1791271338205_image.png
+1791271355858_image.png
+können wir bevor mit den neuen schritten anfangen zuerst meine projektstruktur aufräumen  und einmal auf git pushen - ich bin nämlich gerade verwirrt. brauch ich wirklich all diese files und folders oder kann ich sachen zusammenführen? wie sehen da die best practices aus:
+
+14 Befehle ausgeführt, dateien geteilt
+Gute Idee, aufzuräumen, bevor wir weitermachen. Ich habe mir dafür nicht nur die Screenshots angeschaut, sondern jedes Skript im Repo darauf geprüft, was es liest, schreibt und ob es noch gebraucht wird. Die Verwirrung hat konkrete Gründe:
+
+Drei Evaluatoren für dieselbe Aufgabe. evaluate.py (nur Baseline), evaluate_lora.py (nur LoRA) und evaluate_predictions.py. Der dritte ist der beste: ein gemeinsamer Evaluator mit --predictions-Parameter für jedes Modell. Ich habe ihn auf deinen echten Testsatz angewendet, er liefert exakt dieselben 21 %. Die anderen beiden sind damit überflüssig, auch meine Anpassung an evaluate_lora.py von vorhin.
+
+Ergebnisse ohne System. Manche liegen lose in results/, manche in results/evaluation/, teils doppelt von altem und neuem Evaluator.
+
+Alte Datenversionen zwischen den aktuellen. In data/synthetic/ liegen v1, eine halbe v2 und die "before_repair"-Versionen neben den Dateien, die du wirklich benutzt.
+
+Leere Dateien: quantize.py, docs/architecture.md, requirements.txt, dazu die leeren Ordner notebooks/ und data/raw/.
+
+Die Best Practices dahinter
+Eine Konvention für Ergebnisse: results/<testsatz>/<modellversion>/predictions.jsonl, Metriken daneben. Dann siehst du sofort, welches Modell auf welchem Testsatz wie abgeschnitten hat, z.B. results/real_test_v1/lora_v2/.
+Archivieren statt löschen, wenn etwas zu einem berichteten Ergebnis gehört. Deine README zitiert die v2-Zahlen, also bleiben die Skripte und Daten dafür nachvollziehbar, nur eben in archive/.
+Löschen, was leer oder komplett ersetzt ist.
+Mit git mv verschieben, damit die Historie jeder Datei erhalten bleibt.
+requirements.txt füllen, damit das Projekt auf einem anderen Rechner startet.
+Deine .env ist übrigens korrekt in der .gitignore, da ist alles sicher.
+
+So gehst du vor
+1. Aktuellen Stand sichern, bevor sich etwas ändert:
+
+powershell
+git status
+git tag v2-7lang
+git push origin v2-7lang
+2. Dateien einspielen:
+
+cleanup_structure.ps1 in den Hauptordner noor-health\
+README.md und requirements.txt im Hauptordner ersetzen (in der README ist nur der Abschnitt "Repository Structure" neu)
+die vier Skripte in ml\evaluation\ ersetzen, ihre Ausgabepfade zeigen jetzt auf die neue Struktur
+falls noch nicht passiert: die Lexikon-Dateien nach data\lexicon\ und ml\data\lexicon.py
+3. Aufräumen:
+
+powershell
+powershell -ExecutionPolicy Bypass -File cleanup_structure.ps1
+Das Skript gibt jede Aktion aus, überspringt fehlende Dateien und kann gefahrlos zweimal laufen. Am Ende wertet es den echten Testsatz mit dem gemeinsamen Evaluator neu aus, du solltest wieder 21 % sehen.
+
+4. Prüfen und pushen:
+
+powershell
+git status
+Remove-Item cleanup_structure.ps1
+git add -A
+git commit -m "Restructure project: one results convention, archive superseded scripts and data, add lexicon and real test set"
+git push
+Schau dir bei git status kurz an, ob etwas Unerwartetes dabei ist. Verschobene Dateien erscheinen als "renamed", das ist richtig so.
+
+5. Branch für den Umbau anlegen:
+
+powershell
+git checkout -b de-en-ar-rework
+Ab jetzt sieht der Ablauf für jede Auswertung gleich aus:
+
+powershell
+$env:NOOR_EVAL_SET = "real_test"
+$env:NOOR_RUN_NAME = "lora_v2"
+modal run ml/evaluation/run_lora_modal.py
+python ml/evaluation/evaluate_predictions.py --predictions results/real_test_v1/lora_v2/predictions.jsonl --name qwen3-0.6b_lora_v2
+Der Runner gibt den zweiten Befehl am Ende sogar fertig aus. Wenn du später das neue Modell trainierst, setzt du nur NOOR_RUN_NAME auf lora_v3, und die Ergebnisse landen sauber daneben.
+
+Bewusst nicht angefasst habe ich prepare_training_data.py und generate_utterances.py, weil die beim Generator-Umbau sowieso neu geschrieben werden.
+
+
+cleanup_structure.ps1
+ 
+
+Readme
+Dokument·MD 
+
+Requirements
+TXT 
+
+Run lora modal
+PY 
+
+Run baseline modal
+PY 
+
+Compare models
+PY 
+
+Analyze remaining failures
+PY 
+
+Claude arbeitet direkt mit deiner Codebasis
+
+
+
+
+
+
+Claude ist eine KI und kann Fehler machen. Bitte überprüfe die Antworten.
+
+
+Readme · MD
 # Noor Health
 
 > An offline-first, multilingual AI assistant for structuring patient-reported information in resource-constrained healthcare settings.
@@ -351,31 +484,37 @@ The long-term design goal is local or edge inference with a small, quantized mod
 
 ```text
 noor-health/
-├── backend/
-│
-├── frontend/
-│
+├── app/                      # React frontend (Vite)
+├── backend/                  # FastAPI backend
 ├── data/
-│   └── processed/
-│
+│   ├── synthetic/            # Current generated cases and utterances
+│   ├── processed/            # Train / validation / test splits (SFT format)
+│   ├── real_test/            # Handwritten real-world test set (never trained on)
+│   ├── lexicon/              # Multilingual symptom, drug and time-expression lexicon
+│   └── archive/              # Superseded dataset versions
 ├── ml/
-│   ├── data/
-│   ├── training/
-│   ├── inference/
-│   ├── evaluation/
-│   ├── analysis/
-│   └── archive/
-│
+│   ├── config.py             # Shared paths and constants
+│   ├── data/                 # Generation, splitting, validation, lexicon checks
+│   ├── training/             # LoRA training on Modal
+│   ├── evaluation/           # Inference runners and the shared evaluator
+│   ├── inference/            # Serving inference on Modal
+│   ├── analysis/             # Dataset audits
+│   └── archive/              # Superseded scripts, kept for reproducibility
 ├── results/
-│   └── evaluation/
-│       ├── lora/
-│       ├── comparison/
-│       └── failure_analysis/
-│
+│   ├── synthetic_test/       # Per model: predictions + metrics on the synthetic test set
+│   │   ├── base/
+│   │   ├── lora_v2/
+│   │   ├── comparison/
+│   │   └── failure_analysis/
+│   ├── real_test_v1/         # Per model: predictions + metrics on the real-world test set
+│   ├── analysis/             # Dataset audit outputs
+│   ├── validation/           # Dataset validation outputs
+│   └── archive/
 └── README.md
 ```
 
-The ML pipeline includes dataset generation, multilingual quality control, training, inference, evaluation, base-vs-LoRA comparison, and failure analysis.
+Results follow one convention: `results/<evaluation_set>/<model_version>/predictions.jsonl`,
+with metrics produced next to it by `ml/evaluation/evaluate_predictions.py`.
 
 ---
 
@@ -462,3 +601,10 @@ Development has continued beyond the initial hackathon scope, with a stronger fo
 🚧 **Research / prototype stage**
 
 Noor Health is under active development and is not intended for clinical deployment.
+ 
+
+
+
+
+
+

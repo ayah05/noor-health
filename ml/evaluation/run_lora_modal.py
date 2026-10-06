@@ -9,15 +9,80 @@ import modal
 # LOCAL PATHS
 # ============================================================
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
+# Locally this file lives at ml/evaluation/run_lora_modal.py,
+# so the repository root is two levels up.
+#
+# Modal also imports this module INSIDE the container, where
+# it is copied to /root/run_lora_modal.py and has no parents[2].
+# The paths below are only used by the local entrypoint, so in
+# the container a harmless fallback is enough.
+_THIS_FILE = Path(__file__).resolve()
+
+ROOT_DIR = (
+    _THIS_FILE.parents[2]
+    if len(_THIS_FILE.parents) > 2
+    else _THIS_FILE.parent
+)
 
 RESULTS_DIR = ROOT_DIR / "results"
+
+# ============================================================
+# EVALUATION SET
+# ============================================================
+#
+# Select with the environment variable NOOR_EVAL_SET.
+# Default is the synthetic held-out test set, so existing
+# behaviour is unchanged.
+#
+# Predictions are written to
+#   results/<results_dir>/<NOOR_RUN_NAME>/predictions.jsonl
+# NOOR_RUN_NAME identifies the model version (default: lora_v2).
+#
+# PowerShell:
+#   $env:NOOR_EVAL_SET = "real_test"
+#   $env:NOOR_RUN_NAME = "lora_v2"
+#   modal run ml/evaluation/run_lora_modal.py
+
+import os
+
+EVAL_SETS = {
+    "synthetic_test": {
+        "dataset": "test_sft.jsonl",
+        "split": "test",
+        "expected_samples": 700,
+        "results_dir": "synthetic_test",
+    },
+    "real_test": {
+        "dataset": "real_test_sft.jsonl",
+        "split": "real_test",
+        "expected_samples": None,
+        "results_dir": "real_test_v1",
+    },
+}
+
+EVAL_SET_NAME = os.environ.get(
+    "NOOR_EVAL_SET",
+    "synthetic_test",
+)
+
+if EVAL_SET_NAME not in EVAL_SETS:
+    raise ValueError(
+        f"Unknown NOOR_EVAL_SET {EVAL_SET_NAME!r}. "
+        f"Choose one of {sorted(EVAL_SETS)}."
+    )
+
+EVAL_SET = EVAL_SETS[EVAL_SET_NAME]
+
+RUN_NAME = os.environ.get(
+    "NOOR_RUN_NAME",
+    "lora_v2",
+)
 
 LOCAL_DATASET = (
     ROOT_DIR
     / "data"
     / "processed"
-    / "test_sft.jsonl"
+    / EVAL_SET["dataset"]
 )
 
 
@@ -330,6 +395,13 @@ def run_lora(
 
                     "prediction":
                         prediction.strip(),
+
+                    # Optional metadata (real test set only).
+                    "language_original":
+                        sample.get("language_original"),
+
+                    "input_mode":
+                        sample.get("input_mode"),
                 }
             )
 
@@ -392,7 +464,7 @@ def run_lora(
 def main():
 
     print("=" * 60)
-    print("NOOR HEALTH - LORA TEST SET")
+    print(f"NOOR HEALTH - LORA EVALUATION ({EVAL_SET_NAME})")
     print("=" * 60)
 
     # ========================================================
@@ -436,24 +508,30 @@ def main():
     # SAFETY CHECKS
     # ========================================================
 
-    if len(samples) != 700:
+    expected = EVAL_SET["expected_samples"]
+
+    if (
+        expected is not None
+        and len(samples) != expected
+    ):
 
         raise ValueError(
-            f"Expected 700 test samples, "
+            f"Expected {expected} samples "
+            f"for {EVAL_SET_NAME}, "
             f"found {len(samples)}"
         )
 
     invalid_splits = [
         sample["case_id"]
         for sample in samples
-        if sample.get("split") != "test"
+        if sample.get("split") != EVAL_SET["split"]
     ]
 
     if invalid_splits:
 
         raise ValueError(
-            "Found samples that are not "
-            "marked as test."
+            f"Found samples that are not "
+            f"marked as {EVAL_SET['split']}."
         )
 
     case_ids = {
@@ -496,7 +574,9 @@ def main():
 
     output_file = (
         RESULTS_DIR
-        / "lora_predictions.jsonl"
+        / EVAL_SET["results_dir"]
+        / RUN_NAME
+        / "predictions.jsonl"
     )
 
     output_file.parent.mkdir(
@@ -531,4 +611,11 @@ def main():
     print(
         f"\nPredictions: "
         f"{len(results)}"
+    )
+
+    print(
+        "\nNext step:\n"
+        f"python ml/evaluation/evaluate_predictions.py "
+        f"--predictions {output_file.relative_to(ROOT_DIR).as_posix()} "
+        f"--name qwen3-0.6b_{RUN_NAME}"
     )

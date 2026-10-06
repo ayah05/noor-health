@@ -7,24 +7,56 @@ from pathlib import Path
 # PATHS
 # ============================================================
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
+# ml/evaluation/<file>.py -> repository root
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+# Select with the environment variable NOOR_EVAL_SET
+# (same values as in run_lora_modal.py).
+
+import os
+
+EVAL_SETS = {
+    "synthetic_test": {
+        "prefix": "lora",
+        "split": "test",
+        "expected_samples": 700,
+    },
+    "real_test": {
+        "prefix": "real_test_lora",
+        "split": "real_test",
+        "expected_samples": None,
+    },
+}
+
+EVAL_SET_NAME = os.environ.get(
+    "NOOR_EVAL_SET",
+    "synthetic_test",
+)
+
+if EVAL_SET_NAME not in EVAL_SETS:
+    raise ValueError(
+        f"Unknown NOOR_EVAL_SET {EVAL_SET_NAME!r}. "
+        f"Choose one of {sorted(EVAL_SETS)}."
+    )
+
+EVAL_SET = EVAL_SETS[EVAL_SET_NAME]
 
 PREDICTIONS_FILE = (
     ROOT_DIR
     / "results"
-    / "lora_predictions.jsonl"
+    / f"{EVAL_SET['prefix']}_predictions.jsonl"
 )
 
 METRICS_JSON_FILE = (
     ROOT_DIR
     / "results"
-    / "lora_metrics.json"
+    / f"{EVAL_SET['prefix']}_metrics.json"
 )
 
 METRICS_TXT_FILE = (
     ROOT_DIR
     / "results"
-    / "lora_metrics.txt"
+    / f"{EVAL_SET['prefix']}_metrics.txt"
 )
 
 
@@ -32,7 +64,7 @@ METRICS_TXT_FILE = (
 # CONSTANTS
 # ============================================================
 
-EXPECTED_SAMPLES = 700
+EXPECTED_SAMPLES = EVAL_SET["expected_samples"]
 
 EXPECTED_TOP_LEVEL_KEYS = {
     "chief_complaint",
@@ -1491,7 +1523,8 @@ def main():
     )
 
     if (
-        len(records)
+        EXPECTED_SAMPLES is not None
+        and len(records)
         != EXPECTED_SAMPLES
     ):
 
@@ -1510,7 +1543,7 @@ def main():
 
         if (
             record.get("split")
-            != "test"
+            != EVAL_SET["split"]
         ):
 
             raise ValueError(

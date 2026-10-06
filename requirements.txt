@@ -1,0 +1,10 @@
+# Local environment (data generation, evaluation, backend).
+# GPU libraries (torch, transformers, peft, ...) are installed
+# inside the Modal images defined in the training/inference scripts.
+
+modal
+openai
+python-dotenv
+fastapi
+uvicorn[standard]
+pydantic

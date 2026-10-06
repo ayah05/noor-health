@@ -443,7 +443,9 @@ def main():
     output_file = (
         root_dir
         / "results"
-        / "baseline_final_predictions.jsonl"
+        / "synthetic_test"
+        / "base"
+        / "predictions.jsonl"
     )
 
     # ========================================================

@@ -1,0 +1,275 @@
+{
+  "model_name": "qwen3-0.6b_lora_v2",
+  "predictions_file": "C:\\Users\\emial\\PycharmProjects\\noor-health\\results\\real_test_v1\\lora_v2\\predictions.jsonl",
+  "total": 100,
+  "overall": {
+    "valid_json": {
+      "correct": 93,
+      "total": 100,
+      "accuracy": 0.93
+    },
+    "schema_valid": {
+      "correct": 86,
+      "total": 100,
+      "accuracy": 0.86
+    },
+    "raw_exact": {
+      "correct": 0,
+      "total": 100,
+      "accuracy": 0.0
+    },
+    "core_exact": {
+      "correct": 21,
+      "total": 100,
+      "accuracy": 0.21
+    },
+    "pipeline_exact": {
+      "correct": 21,
+      "total": 100,
+      "accuracy": 0.21
+    },
+    "chief_complaint": {
+      "correct": 61,
+      "total": 100,
+      "accuracy": 0.61
+    },
+    "symptom_extraction": {
+      "correct": 42,
+      "total": 100,
+      "accuracy": 0.42
+    },
+    "symptom_status": {
+      "correct": 39,
+      "total": 100,
+      "accuracy": 0.39
+    },
+    "duration": {
+      "correct": 28,
+      "total": 100,
+      "accuracy": 0.28
+    },
+    "medication": {
+      "correct": 86,
+      "total": 100,
+      "accuracy": 0.86
+    },
+    "allergy": {
+      "correct": 84,
+      "total": 100,
+      "accuracy": 0.84
+    },
+    "missing_information_raw": {
+      "correct": 10,
+      "total": 100,
+      "accuracy": 0.1
+    },
+    "missing_information_derived": {
+      "correct": 57,
+      "total": 100,
+      "accuracy": 0.57
+    }
+  },
+  "by_language": {
+    "ar_msa": {
+      "valid_json": {
+        "correct": 16,
+        "total": 20,
+        "accuracy": 0.8
+      },
+      "schema_valid": {
+        "correct": 16,
+        "total": 20,
+        "accuracy": 0.8
+      },
+      "raw_exact": {
+        "correct": 0,
+        "total": 20,
+        "accuracy": 0.0
+      },
+      "core_exact": {
+        "correct": 1,
+        "total": 20,
+        "accuracy": 0.05
+      },
+      "pipeline_exact": {
+        "correct": 1,
+        "total": 20,
+        "accuracy": 0.05
+      },
+      "chief_complaint": {
+        "correct": 7,
+        "total": 20,
+        "accuracy": 0.35
+      },
+      "symptom_extraction": {
+        "correct": 3,
+        "total": 20,
+        "accuracy": 0.15
+      },
+      "symptom_status": {
+        "correct": 3,
+        "total": 20,
+        "accuracy": 0.15
+      },
+      "duration": {
+        "correct": 2,
+        "total": 20,
+        "accuracy": 0.1
+      },
+      "medication": {
+        "correct": 12,
+        "total": 20,
+        "accuracy": 0.6
+      },
+      "allergy": {
+        "correct": 10,
+        "total": 20,
+        "accuracy": 0.5
+      },
+      "missing_information_raw": {
+        "correct": 2,
+        "total": 20,
+        "accuracy": 0.1
+      },
+      "missing_information_derived": {
+        "correct": 6,
+        "total": 20,
+        "accuracy": 0.3
+      }
+    },
+    "de": {
+      "valid_json": {
+        "correct": 37,
+        "total": 40,
+        "accuracy": 0.925
+      },
+      "schema_valid": {
+        "correct": 34,
+        "total": 40,
+        "accuracy": 0.85
+      },
+      "raw_exact": {
+        "correct": 0,
+        "total": 40,
+        "accuracy": 0.0
+      },
+      "core_exact": {
+        "correct": 10,
+        "total": 40,
+        "accuracy": 0.25
+      },
+      "pipeline_exact": {
+        "correct": 10,
+        "total": 40,
+        "accuracy": 0.25
+      },
+      "chief_complaint": {
+        "correct": 24,
+        "total": 40,
+        "accuracy": 0.6
+      },
+      "symptom_extraction": {
+        "correct": 20,
+        "total": 40,
+        "accuracy": 0.5
+      },
+      "symptom_status": {
+        "correct": 18,
+        "total": 40,
+        "accuracy": 0.45
+      },
+      "duration": {
+        "correct": 14,
+        "total": 40,
+        "accuracy": 0.35
+      },
+      "medication": {
+        "correct": 35,
+        "total": 40,
+        "accuracy": 0.875
+      },
+      "allergy": {
+        "correct": 35,
+        "total": 40,
+        "accuracy": 0.875
+      },
+      "missing_information_raw": {
+        "correct": 4,
+        "total": 40,
+        "accuracy": 0.1
+      },
+      "missing_information_derived": {
+        "correct": 27,
+        "total": 40,
+        "accuracy": 0.675
+      }
+    },
+    "en": {
+      "valid_json": {
+        "correct": 40,
+        "total": 40,
+        "accuracy": 1.0
+      },
+      "schema_valid": {
+        "correct": 36,
+        "total": 40,
+        "accuracy": 0.9
+      },
+      "raw_exact": {
+        "correct": 0,
+        "total": 40,
+        "accuracy": 0.0
+      },
+      "core_exact": {
+        "correct": 10,
+        "total": 40,
+        "accuracy": 0.25
+      },
+      "pipeline_exact": {
+        "correct": 10,
+        "total": 40,
+        "accuracy": 0.25
+      },
+      "chief_complaint": {
+        "correct": 30,
+        "total": 40,
+        "accuracy": 0.75
+      },
+      "symptom_extraction": {
+        "correct": 19,
+        "total": 40,
+        "accuracy": 0.475
+      },
+      "symptom_status": {
+        "correct": 18,
+        "total": 40,
+        "accuracy": 0.45
+      },
+      "duration": {
+        "correct": 12,
+        "total": 40,
+        "accuracy": 0.3
+      },
+      "medication": {
+        "correct": 39,
+        "total": 40,
+        "accuracy": 0.975
+      },
+      "allergy": {
+        "correct": 39,
+        "total": 40,
+        "accuracy": 0.975
+      },
+      "missing_information_raw": {
+        "correct": 4,
+        "total": 40,
+        "accuracy": 0.1
+      },
+      "missing_information_derived": {
+        "correct": 24,
+        "total": 40,
+        "accuracy": 0.6
+      }
+    }
+  }
+}

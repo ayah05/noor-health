@@ -996,7 +996,7 @@ def main():
     parser.add_argument(
         "--output-dir",
         default=(
-            "results/evaluation/comparison"
+            "results/synthetic_test/comparison"
         ),
         help=(
             "Directory for comparison "

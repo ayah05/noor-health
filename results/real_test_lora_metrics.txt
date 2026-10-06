@@ -1,0 +1,100 @@
+============================================================================
+NOOR HEALTH - LORA EVALUATION
+============================================================================
+
+Model: Qwen/Qwen3-0.6B + LoRA
+Samples: 100
+
+STRUCTURED EXTRACTION SUMMARY
+----------------------------------------------------------------------------
+Raw exact structured match             0 / 100     0.00%
+Core extraction exact match           21 / 100    21.00%
+Pipeline exact match                  21 / 100    21.00%
+
+OVERALL
+----------------------------------------------------------------------------
+Valid JSON                            93 / 100    93.00%
+Schema valid                          89 / 100    89.00%
+Raw exact structured match             0 / 100     0.00%
+Core extraction exact match           21 / 100    21.00%
+Pipeline exact match                  21 / 100    21.00%
+Chief complaint accuracy              61 / 100    61.00%
+Symptom extraction accuracy           42 / 100    42.00%
+Symptom status accuracy               39 / 100    39.00%
+Duration accuracy                     28 / 100    28.00%
+Medication accuracy                   86 / 100    86.00%
+Allergy accuracy                      84 / 100    84.00%
+Missing information (raw)             10 / 100    10.00%
+Missing information (derived)         57 / 100    57.00%
+
+============================================================================
+FAILURE COUNTS
+============================================================================
+Valid JSON                             7
+Schema valid                          11
+Raw exact structured match           100
+Core extraction exact match           79
+Pipeline exact match                  79
+Chief complaint accuracy              39
+Symptom extraction accuracy           58
+Symptom status accuracy               61
+Duration accuracy                     72
+Medication accuracy                   14
+Allergy accuracy                      16
+Missing information (raw)             90
+Missing information (derived)         43
+
+============================================================================
+BY LANGUAGE
+============================================================================
+
+Arabic
+----------------------------------------------------------------------------
+Samples: 20
+Valid JSON                            16 / 20     80.00%
+Schema valid                          16 / 20     80.00%
+Raw exact structured match             0 / 20      0.00%
+Core extraction exact match            1 / 20      5.00%
+Pipeline exact match                   1 / 20      5.00%
+Chief complaint accuracy               7 / 20     35.00%
+Symptom extraction accuracy            3 / 20     15.00%
+Symptom status accuracy                3 / 20     15.00%
+Duration accuracy                      2 / 20     10.00%
+Medication accuracy                   12 / 20     60.00%
+Allergy accuracy                      10 / 20     50.00%
+Missing information (raw)              2 / 20     10.00%
+Missing information (derived)          6 / 20     30.00%
+
+German
+----------------------------------------------------------------------------
+Samples: 40
+Valid JSON                            37 / 40     92.50%
+Schema valid                          36 / 40     90.00%
+Raw exact structured match             0 / 40      0.00%
+Core extraction exact match           10 / 40     25.00%
+Pipeline exact match                  10 / 40     25.00%
+Chief complaint accuracy              24 / 40     60.00%
+Symptom extraction accuracy           20 / 40     50.00%
+Symptom status accuracy               18 / 40     45.00%
+Duration accuracy                     14 / 40     35.00%
+Medication accuracy                   35 / 40     87.50%
+Allergy accuracy                      35 / 40     87.50%
+Missing information (raw)              4 / 40     10.00%
+Missing information (derived)         27 / 40     67.50%
+
+English
+----------------------------------------------------------------------------
+Samples: 40
+Valid JSON                            40 / 40    100.00%
+Schema valid                          37 / 40     92.50%
+Raw exact structured match             0 / 40      0.00%
+Core extraction exact match           10 / 40     25.00%
+Pipeline exact match                  10 / 40     25.00%
+Chief complaint accuracy              30 / 40     75.00%
+Symptom extraction accuracy           19 / 40     47.50%
+Symptom status accuracy               18 / 40     45.00%
+Duration accuracy                     12 / 40     30.00%
+Medication accuracy                   39 / 40     97.50%
+Allergy accuracy                      39 / 40     97.50%
+Missing information (raw)              4 / 40     10.00%
+Missing information (derived)         24 / 40     60.00%
