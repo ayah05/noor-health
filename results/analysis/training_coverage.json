@@ -1,0 +1,265 @@
+{
+  "training_file": "C:\\Users\\emial\\PycharmProjects\\noor-health\\data\\processed\\train_sft.jsonl",
+  "total_samples": 5589,
+  "languages": {
+    "ar_msa": {
+      "samples": 800,
+      "symptom_status": {
+        "absent": 280,
+        "present": 1138,
+        "uncertain": 283
+      },
+      "medication_status": {
+        "none": 244,
+        "reported": 238,
+        "unknown": 318
+      },
+      "allergy_status": {
+        "none": 288,
+        "reported": 206,
+        "unknown": 306
+      },
+      "symptom_count": {
+        "1": 232,
+        "2": 389,
+        "3": 25,
+        "4+": 154
+      },
+      "duration_count": {
+        "0": 133,
+        "1": 555,
+        "2+": 112
+      },
+      "semantic_complexity": {
+        "samples_with_negation": 280,
+        "negation_percent": 35.0,
+        "samples_with_uncertainty": 283,
+        "uncertainty_percent": 35.375,
+        "samples_with_multiple_durations": 112,
+        "multiple_durations_percent": 14.0
+      }
+    },
+    "de": {
+      "samples": 799,
+      "symptom_status": {
+        "absent": 280,
+        "present": 1136,
+        "uncertain": 283
+      },
+      "medication_status": {
+        "none": 244,
+        "reported": 238,
+        "unknown": 317
+      },
+      "allergy_status": {
+        "none": 287,
+        "reported": 206,
+        "unknown": 306
+      },
+      "symptom_count": {
+        "1": 232,
+        "2": 388,
+        "3": 25,
+        "4+": 154
+      },
+      "duration_count": {
+        "0": 133,
+        "1": 555,
+        "2+": 111
+      },
+      "semantic_complexity": {
+        "samples_with_negation": 280,
+        "negation_percent": 35.04380475594493,
+        "samples_with_uncertainty": 283,
+        "uncertainty_percent": 35.41927409261577,
+        "samples_with_multiple_durations": 111,
+        "multiple_durations_percent": 13.892365456821027
+      }
+    },
+    "en": {
+      "samples": 798,
+      "symptom_status": {
+        "absent": 280,
+        "present": 1134,
+        "uncertain": 283
+      },
+      "medication_status": {
+        "none": 242,
+        "reported": 238,
+        "unknown": 318
+      },
+      "allergy_status": {
+        "none": 288,
+        "reported": 206,
+        "unknown": 304
+      },
+      "symptom_count": {
+        "1": 232,
+        "2": 387,
+        "3": 25,
+        "4+": 154
+      },
+      "duration_count": {
+        "0": 133,
+        "1": 554,
+        "2+": 111
+      },
+      "semantic_complexity": {
+        "samples_with_negation": 280,
+        "negation_percent": 35.08771929824562,
+        "samples_with_uncertainty": 283,
+        "uncertainty_percent": 35.46365914786968,
+        "samples_with_multiple_durations": 111,
+        "multiple_durations_percent": 13.909774436090226
+      }
+    },
+    "es": {
+      "samples": 800,
+      "symptom_status": {
+        "absent": 280,
+        "present": 1138,
+        "uncertain": 283
+      },
+      "medication_status": {
+        "none": 244,
+        "reported": 238,
+        "unknown": 318
+      },
+      "allergy_status": {
+        "none": 288,
+        "reported": 206,
+        "unknown": 306
+      },
+      "symptom_count": {
+        "1": 232,
+        "2": 389,
+        "3": 25,
+        "4+": 154
+      },
+      "duration_count": {
+        "0": 133,
+        "1": 555,
+        "2+": 112
+      },
+      "semantic_complexity": {
+        "samples_with_negation": 280,
+        "negation_percent": 35.0,
+        "samples_with_uncertainty": 283,
+        "uncertainty_percent": 35.375,
+        "samples_with_multiple_durations": 112,
+        "multiple_durations_percent": 14.0
+      }
+    },
+    "fr": {
+      "samples": 792,
+      "symptom_status": {
+        "absent": 278,
+        "present": 1130,
+        "uncertain": 281
+      },
+      "medication_status": {
+        "none": 244,
+        "reported": 236,
+        "unknown": 312
+      },
+      "allergy_status": {
+        "none": 288,
+        "reported": 200,
+        "unknown": 304
+      },
+      "symptom_count": {
+        "1": 228,
+        "2": 385,
+        "3": 25,
+        "4+": 154
+      },
+      "duration_count": {
+        "0": 133,
+        "1": 547,
+        "2+": 112
+      },
+      "semantic_complexity": {
+        "samples_with_negation": 278,
+        "negation_percent": 35.101010101010104,
+        "samples_with_uncertainty": 281,
+        "uncertainty_percent": 35.47979797979798,
+        "samples_with_multiple_durations": 112,
+        "multiple_durations_percent": 14.141414141414142
+      }
+    },
+    "hi": {
+      "samples": 800,
+      "symptom_status": {
+        "absent": 280,
+        "present": 1138,
+        "uncertain": 283
+      },
+      "medication_status": {
+        "none": 244,
+        "reported": 238,
+        "unknown": 318
+      },
+      "allergy_status": {
+        "none": 288,
+        "reported": 206,
+        "unknown": 306
+      },
+      "symptom_count": {
+        "1": 232,
+        "2": 389,
+        "3": 25,
+        "4+": 154
+      },
+      "duration_count": {
+        "0": 133,
+        "1": 555,
+        "2+": 112
+      },
+      "semantic_complexity": {
+        "samples_with_negation": 280,
+        "negation_percent": 35.0,
+        "samples_with_uncertainty": 283,
+        "uncertainty_percent": 35.375,
+        "samples_with_multiple_durations": 112,
+        "multiple_durations_percent": 14.0
+      }
+    },
+    "sw": {
+      "samples": 800,
+      "symptom_status": {
+        "absent": 280,
+        "present": 1138,
+        "uncertain": 283
+      },
+      "medication_status": {
+        "none": 244,
+        "reported": 238,
+        "unknown": 318
+      },
+      "allergy_status": {
+        "none": 288,
+        "reported": 206,
+        "unknown": 306
+      },
+      "symptom_count": {
+        "1": 232,
+        "2": 389,
+        "3": 25,
+        "4+": 154
+      },
+      "duration_count": {
+        "0": 133,
+        "1": 555,
+        "2+": 112
+      },
+      "semantic_complexity": {
+        "samples_with_negation": 280,
+        "negation_percent": 35.0,
+        "samples_with_uncertainty": 283,
+        "uncertainty_percent": 35.375,
+        "samples_with_multiple_durations": 112,
+        "multiple_durations_percent": 14.0
+      }
+    }
+  }
+}

@@ -1,0 +1,238 @@
+{
+  "base_file": "C:\\Users\\emial\\PycharmProjects\\noor-health\\results\\baseline_final_predictions.jsonl",
+  "lora_file": "C:\\Users\\emial\\PycharmProjects\\noor-health\\results\\evaluation\\lora\\lora_predictions.jsonl",
+  "total_samples": 700,
+  "primary_metric": "core_exact",
+  "primary_metric_display_name": "Core extraction exact match",
+  "overall_metrics": {
+    "valid_json": {
+      "base_correct": 685,
+      "lora_correct": 695,
+      "base_accuracy": 97.85714285714285,
+      "lora_accuracy": 99.28571428571429,
+      "delta_percentage_points": 1.4285714285714448,
+      "both_correct": 681,
+      "lora_improved": 14,
+      "lora_regressed": 4,
+      "both_wrong": 1
+    },
+    "schema_valid": {
+      "base_correct": 562,
+      "lora_correct": 684,
+      "base_accuracy": 80.28571428571428,
+      "lora_accuracy": 97.71428571428571,
+      "delta_percentage_points": 17.42857142857143,
+      "both_correct": 547,
+      "lora_improved": 137,
+      "lora_regressed": 15,
+      "both_wrong": 1
+    },
+    "raw_exact": {
+      "base_correct": 4,
+      "lora_correct": 14,
+      "base_accuracy": 0.5714285714285714,
+      "lora_accuracy": 2.0,
+      "delta_percentage_points": 1.4285714285714286,
+      "both_correct": 0,
+      "lora_improved": 14,
+      "lora_regressed": 4,
+      "both_wrong": 682
+    },
+    "core_exact": {
+      "base_correct": 12,
+      "lora_correct": 543,
+      "base_accuracy": 1.7142857142857144,
+      "lora_accuracy": 77.57142857142857,
+      "delta_percentage_points": 75.85714285714286,
+      "both_correct": 12,
+      "lora_improved": 531,
+      "lora_regressed": 0,
+      "both_wrong": 157
+    },
+    "pipeline_exact": {
+      "base_correct": 12,
+      "lora_correct": 543,
+      "base_accuracy": 1.7142857142857144,
+      "lora_accuracy": 77.57142857142857,
+      "delta_percentage_points": 75.85714285714286,
+      "both_correct": 12,
+      "lora_improved": 531,
+      "lora_regressed": 0,
+      "both_wrong": 157
+    },
+    "chief_complaint": {
+      "base_correct": 102,
+      "lora_correct": 683,
+      "base_accuracy": 14.571428571428571,
+      "lora_accuracy": 97.57142857142857,
+      "delta_percentage_points": 83.0,
+      "both_correct": 102,
+      "lora_improved": 581,
+      "lora_regressed": 0,
+      "both_wrong": 17
+    },
+    "symptom_extraction": {
+      "base_correct": 51,
+      "lora_correct": 590,
+      "base_accuracy": 7.285714285714286,
+      "lora_accuracy": 84.28571428571429,
+      "delta_percentage_points": 77.0,
+      "both_correct": 51,
+      "lora_improved": 539,
+      "lora_regressed": 0,
+      "both_wrong": 110
+    },
+    "symptom_status": {
+      "base_correct": 51,
+      "lora_correct": 578,
+      "base_accuracy": 7.285714285714286,
+      "lora_accuracy": 82.57142857142857,
+      "delta_percentage_points": 75.28571428571428,
+      "both_correct": 51,
+      "lora_improved": 527,
+      "lora_regressed": 0,
+      "both_wrong": 122
+    },
+    "duration": {
+      "base_correct": 34,
+      "lora_correct": 582,
+      "base_accuracy": 4.857142857142857,
+      "lora_accuracy": 83.14285714285714,
+      "delta_percentage_points": 78.28571428571428,
+      "both_correct": 34,
+      "lora_improved": 548,
+      "lora_regressed": 0,
+      "both_wrong": 118
+    },
+    "medication": {
+      "base_correct": 276,
+      "lora_correct": 680,
+      "base_accuracy": 39.42857142857143,
+      "lora_accuracy": 97.14285714285714,
+      "delta_percentage_points": 57.71428571428571,
+      "both_correct": 266,
+      "lora_improved": 414,
+      "lora_regressed": 10,
+      "both_wrong": 10
+    },
+    "allergy": {
+      "base_correct": 361,
+      "lora_correct": 663,
+      "base_accuracy": 51.57142857142857,
+      "lora_accuracy": 94.71428571428572,
+      "delta_percentage_points": 43.14285714285715,
+      "both_correct": 349,
+      "lora_improved": 314,
+      "lora_regressed": 12,
+      "both_wrong": 25
+    },
+    "missing_information_raw": {
+      "base_correct": 192,
+      "lora_correct": 15,
+      "base_accuracy": 27.42857142857143,
+      "lora_accuracy": 2.142857142857143,
+      "delta_percentage_points": -25.28571428571429,
+      "both_correct": 0,
+      "lora_improved": 15,
+      "lora_regressed": 192,
+      "both_wrong": 493
+    },
+    "missing_information_derived": {
+      "base_correct": 168,
+      "lora_correct": 673,
+      "base_accuracy": 24.0,
+      "lora_accuracy": 96.14285714285714,
+      "delta_percentage_points": 72.14285714285714,
+      "both_correct": 168,
+      "lora_improved": 505,
+      "lora_regressed": 0,
+      "both_wrong": 27
+    }
+  },
+  "primary_metric_by_language": {
+    "ar_msa": {
+      "total": 100,
+      "base_correct": 0,
+      "lora_correct": 84,
+      "base_accuracy": 0.0,
+      "lora_accuracy": 84.0,
+      "delta_percentage_points": 84.0,
+      "both_correct": 0,
+      "lora_improved": 84,
+      "lora_regressed": 0,
+      "both_wrong": 16
+    },
+    "de": {
+      "total": 100,
+      "base_correct": 0,
+      "lora_correct": 93,
+      "base_accuracy": 0.0,
+      "lora_accuracy": 93.0,
+      "delta_percentage_points": 93.0,
+      "both_correct": 0,
+      "lora_improved": 93,
+      "lora_regressed": 0,
+      "both_wrong": 7
+    },
+    "en": {
+      "total": 100,
+      "base_correct": 11,
+      "lora_correct": 89,
+      "base_accuracy": 11.0,
+      "lora_accuracy": 89.0,
+      "delta_percentage_points": 78.0,
+      "both_correct": 11,
+      "lora_improved": 78,
+      "lora_regressed": 0,
+      "both_wrong": 11
+    },
+    "es": {
+      "total": 100,
+      "base_correct": 0,
+      "lora_correct": 89,
+      "base_accuracy": 0.0,
+      "lora_accuracy": 89.0,
+      "delta_percentage_points": 89.0,
+      "both_correct": 0,
+      "lora_improved": 89,
+      "lora_regressed": 0,
+      "both_wrong": 11
+    },
+    "fr": {
+      "total": 100,
+      "base_correct": 1,
+      "lora_correct": 88,
+      "base_accuracy": 1.0,
+      "lora_accuracy": 88.0,
+      "delta_percentage_points": 87.0,
+      "both_correct": 1,
+      "lora_improved": 87,
+      "lora_regressed": 0,
+      "both_wrong": 12
+    },
+    "hi": {
+      "total": 100,
+      "base_correct": 0,
+      "lora_correct": 48,
+      "base_accuracy": 0.0,
+      "lora_accuracy": 48.0,
+      "delta_percentage_points": 48.0,
+      "both_correct": 0,
+      "lora_improved": 48,
+      "lora_regressed": 0,
+      "both_wrong": 52
+    },
+    "sw": {
+      "total": 100,
+      "base_correct": 0,
+      "lora_correct": 52,
+      "base_accuracy": 0.0,
+      "lora_accuracy": 52.0,
+      "delta_percentage_points": 52.0,
+      "both_correct": 0,
+      "lora_improved": 52,
+      "lora_regressed": 0,
+      "both_wrong": 48
+    }
+  }
+}
