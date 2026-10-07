@@ -42,7 +42,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from config import PROCESSED_DATA_DIR, SYNTHETIC_DATA_DIR  # noqa: E402
 from generate_synthetic import determine_missing_information  # noqa: E402
-from lexicon import check_sample, contains_term, load_lexicon, normalize  # noqa: E402
+from lexicon import check_sample, contains_term, load_lexicon, normalize, pattern_matches  # noqa: E402
 
 
 # ============================================================
@@ -404,6 +404,7 @@ DIGITS = re.compile(r"[0-9\u0660-\u0669\u06F0-\u06F9]")
 
 
 ARABIC = {"ar_msa", "ar_eg"}
+GENERIC_ENGLISH = {"pain", "hurts", "feel", "have", "when", "with", "keep", "really", "about"}
 
 # A reported drug must not be preceded by a block-specific negation
 # ("not allergic to X", "I don't take X") or followed by doubt ("X, not sure").
@@ -461,8 +462,15 @@ def validate(sample: dict, plan: dict, lex: dict) -> list[str]:
     # A code-switched symptom may be said in English instead.
     cs = plan.get("code_switch_symptom")
     if cs:
-        english = lex["symptoms"][cs]["en"]["match"]
-        if any(p in normalize(text) for p in english):
+        english = lex["symptoms"][cs]["en"]
+        norm = normalize(text)
+        content_words = {
+            w for phrase in english["phrases"] for w in re.findall(r"[a-z]+", normalize(phrase))
+            if len(w) > 3 and w not in GENERIC_ENGLISH
+        }
+        if any(pattern_matches(p, norm) for p in english["match"]) or any(
+            re.search(rf"(?<![a-z]){w}(?![a-z])", norm) for w in content_words
+        ):
             problems = [p for p in problems if not p.startswith(f"symptom not found: {cs} ")]
 
     exact_planned = any(s["time"]["mode"] == "exact" for s in plan["symptoms"])
@@ -591,6 +599,58 @@ def call_llm(prompt: str) -> str:
 # WORKER
 # ============================================================
 
+def make_record(case_id, split, language, utterance, target, plan, attempt) -> dict:
+    return {
+        "case_id": case_id,
+        "split": split,
+        "language": language,
+        "utterance": augment(utterance, plan, case_id, language),
+        "utterance_clean": utterance,
+        "target": target,
+        "plan": plan,
+        "attempts": attempt,
+        "source": "synthetic_v3",
+        "generator_model": MODEL,
+        "schema_version": "v2",
+    }
+
+
+def revalidate_rejected(lex: dict):
+    """
+    Re-check stored failed attempts with the CURRENT lexicon and validator.
+    Attempts that now pass are moved to the output file (no API calls).
+    Useful after fixing a validator that was too strict.
+    """
+    if not REJECTED_FILE.exists():
+        print("No rejected file.")
+        return
+    with REJECTED_FILE.open(encoding="utf-8") as f:
+        rejected = [json.loads(line) for line in f if line.strip()]
+
+    recovered, still_rejected = [], []
+    for r in rejected:
+        for attempt, a in enumerate(r["failed_attempts"], start=1):
+            sample = {"language": r["language"], "utterance": a["utterance"], "target": r["target"]}
+            if not validate(sample, r["plan"], lex):
+                recovered.append(make_record(
+                    r["case_id"], r["split"], r["language"], a["utterance"], r["target"], r["plan"], attempt,
+                ))
+                break
+        else:
+            still_rejected.append(r)
+
+    for record in recovered:
+        append_jsonl(OUTPUT_FILE, record)
+    with REJECTED_FILE.open("w", encoding="utf-8") as f:
+        for r in still_rejected:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+
+    print(f"Recovered {len(recovered)} of {len(rejected)}; still rejected: {len(still_rejected)}")
+    for r in still_rejected:
+        print(f"  {r['case_id']} [{r['language']}]: {r['failed_attempts'][-1]['problems']}")
+    print("Remaining rejected cases are regenerated on the next normal run only if you delete them from the rejected file.")
+
+
 def process(case: dict, coordinated, language: str, lex: dict, generate=call_llm) -> dict:
     plan = build_plan(case, coordinated, language, lex)
     prompt = build_prompt(plan, language)
@@ -604,19 +664,7 @@ def process(case: dict, coordinated, language: str, lex: dict, generate=call_llm
         if not problems:
             return {
                 "ok": True,
-                "record": {
-                    "case_id": case["case_id"],
-                    "split": case["_split"],
-                    "language": language,
-                    "utterance": augment(utterance, plan, case["case_id"], language),
-                    "utterance_clean": utterance,
-                    "target": target,
-                    "plan": plan,
-                    "attempts": attempt,
-                    "source": "synthetic_v3",
-                    "generator_model": MODEL,
-                    "schema_version": "v2",
-                },
+                "record": make_record(case["case_id"], case["_split"], language, utterance, target, plan, attempt),
             }
         attempts.append({"utterance": utterance, "problems": problems})
 
@@ -660,9 +708,15 @@ def main():
     parser.add_argument("--limit", type=int, default=None, help="only the first N cases")
     parser.add_argument("--languages", nargs="*", default=list(LANGUAGES))
     parser.add_argument("--workers", type=int, default=MAX_WORKERS)
+    parser.add_argument("--revalidate-rejected", action="store_true",
+                        help="re-check rejected attempts with the current validator, no API calls")
     args = parser.parse_args()
 
     lex = load_lexicon()
+
+    if args.revalidate_rejected:
+        revalidate_rejected(lex)
+        return
     cases = load_cases()
     if args.limit:
         cases = cases[: args.limit]

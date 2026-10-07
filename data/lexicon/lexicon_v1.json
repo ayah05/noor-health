@@ -152,7 +152,8 @@
         "match": [
           "اخد نفسي",
           "نفسي مقطوع",
-          "ضيق في النفس"
+          "ضيق في النفس",
+          "re:(عارفه?|قادره?) (اخد|اتنفس)"
         ]
       }
     },
@@ -314,7 +315,8 @@
           "headache",
           "head hurt",
           "head is pounding",
-          "head pain"
+          "head pain",
+          "re:\\bhead\\b.{0,25}\\b(pound|hurt|ach)"
         ]
       },
       "de": {
@@ -463,7 +465,9 @@
         "match": [
           "übel",
           "mir ist schlecht",
-          "mir ist so schlecht"
+          "mir ist so schlecht",
+          "re:\\bmir\\b.{0,40}\\bschlecht\\b(?!\\s+luft)",
+          "re:schlecht ist\\b"
         ]
       },
       "ar_msa": {
@@ -485,8 +489,7 @@
           "غمم",
           "غامه",
           "غثيان",
-          "عايز ارجع",
-          "عايزه ارجع"
+          "re:عايزه? ارجع"
         ]
       }
     },
@@ -604,7 +607,10 @@
           "constipat",
           "can't go to the toilet",
           "cant go to the toilet",
-          "haven't gone"
+          "haven't gone",
+          "cannot go to the toilet",
+          "can not go to the toilet",
+          "haven't been to the toilet"
         ]
       },
       "de": {
@@ -633,7 +639,7 @@
         ],
         "match": [
           "امساك",
-          "مش عارف ادخل الحمام"
+          "re:(عارفه?|قادره?) ادخل الحمام"
         ]
       }
     },
@@ -732,7 +738,7 @@
           "مسدود",
           "مليش نفس",
           "نفس للاكل",
-          "مش قادر اكل"
+          "re:قادره? (ا|ا)كل"
         ]
       }
     },
@@ -779,7 +785,7 @@
         "match": [
           "ضعيف",
           "حيل",
-          "مش قادر اقف"
+          "re:قادره? (اقف|اوقف)"
         ]
       }
     },

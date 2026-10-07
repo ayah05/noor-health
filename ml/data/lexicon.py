@@ -95,6 +95,12 @@ def validate_lexicon(lex: dict) -> list[str]:
             if not entry.get("match"):
                 errors.append(f"{name}/{lang}: no match patterns")
             for pattern in entry.get("match", []):
+                if pattern.startswith("re:"):
+                    try:
+                        re.compile(pattern[3:])
+                    except re.error as error:
+                        errors.append(f"{name}/{lang}: invalid regex {pattern!r}: {error}")
+                    continue
                 if pattern != normalize(pattern):
                     errors.append(
                         f"{name}/{lang}: match pattern {pattern!r} is not normalized "
@@ -107,7 +113,7 @@ def validate_lexicon(lex: dict) -> list[str]:
         for lang in languages:
             entry = per_lang.get(lang) or {}
             for phrase in entry.get("phrases", []):
-                if not any(p in normalize(phrase) for p in entry.get("match", [])):
+                if not any(pattern_matches(p, normalize(phrase)) for p in entry.get("match", [])):
                     errors.append(f"{name}/{lang}: phrase {phrase!r} is not matched by its own match patterns")
 
     for drug in set(MEDICATIONS) | set(ALLERGIES):
@@ -154,10 +160,22 @@ def contains_term(text: str, term: str) -> bool:
     return term in text
 
 
+def pattern_matches(pattern: str, normalized_text: str) -> bool:
+    """
+    A match pattern is either a plain normalized substring, or a regular
+    expression prefixed with "re:" for cases a substring cannot express:
+    gender inflection ("re:مش قادره? اكل") or words in between
+    ("re:mir ist\\b.{0,30}\\bschlecht").
+    """
+    if pattern.startswith("re:"):
+        return re.search(pattern[3:], normalized_text) is not None
+    return pattern in normalized_text
+
+
 def symptom_mentioned(utterance: str, symptom: str, language: str, lex: dict) -> bool:
     text = normalize(utterance)
     patterns = lex["symptoms"][symptom][language]["match"]
-    return any(p in text for p in patterns)
+    return any(pattern_matches(p, text) for p in patterns)
 
 
 def drug_mentioned(utterance: str, drug: str, language: str, lex: dict) -> bool:
