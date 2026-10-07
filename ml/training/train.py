@@ -1,4 +1,21 @@
+"""
+LoRA fine-tuning of Qwen3-0.6B on Modal.
+
+The local entrypoint reads the SFT data from data/processed/<data_version>/
+and the system prompt from ml/prompts.py, and passes both to the GPU
+function. No manual upload to a Modal volume is needed, and training and
+evaluation are guaranteed to use the same prompt.
+
+PowerShell:
+    $env:NOOR_RUN_NAME = "lora_v3"        # adapter name on the model volume
+    $env:NOOR_DATA_VERSION = "v3"         # data/processed/v3/
+    $env:NOOR_PROMPT_VERSION = "v3"       # key in ml/prompts.py
+    modal run ml/training/train.py
+"""
+
 import json
+import os
+import sys
 from pathlib import Path
 
 import modal
@@ -12,13 +29,24 @@ APP_NAME = "noor-health-training"
 
 BASE_MODEL = "Qwen/Qwen3-0.6B"
 
-REMOTE_DATA_DIR = "../data"
-REMOTE_OUTPUT_DIR = "/outputs/noor-health-qwen3-lora"
+RUN_NAME = os.environ.get("NOOR_RUN_NAME", "lora_v3")
+DATA_VERSION = os.environ.get("NOOR_DATA_VERSION", "v3")
+PROMPT_VERSION = os.environ.get("NOOR_PROMPT_VERSION", "v3")
 
-TRAIN_FILE = f"{REMOTE_DATA_DIR}/train_sft.jsonl"
-VALIDATION_FILE = f"{REMOTE_DATA_DIR}/validation_sft.jsonl"
+# Expected (train, validation) sizes per data version. A mismatch means the
+# wrong or an incomplete data folder; checked locally before the GPU starts.
+EXPECTED_SAMPLES = {
+    "v2": (5589, 699),
+    "v3": (3200, 400),
+}
 
-MAX_LENGTH = 512
+# Model volume layout: /outputs/noor-health-qwen3-<run_name>/final-adapter
+# (the v2 adapter keeps its original folder noor-health-qwen3-lora/)
+VOLUME_ROOT = "/outputs"
+
+# Raised from 512: the v3 system prompt is longer. Records that would still
+# be truncated abort the training instead of silently losing target tokens.
+MAX_LENGTH = 1536
 
 NUM_EPOCHS = 3
 
@@ -52,85 +80,10 @@ image = (
     )
 )
 
-training_data_volume = modal.Volume.from_name(
-    "noor-health-training-data",
-    create_if_missing=True,
-)
-
 model_volume = modal.Volume.from_name(
     "noor-health-models",
     create_if_missing=True,
 )
-
-
-# ============================================================
-# SYSTEM PROMPT
-# ============================================================
-
-SYSTEM_PROMPT = """
-You are Noor Health, a clinical intake structuring assistant.
-
-Your task is to convert a patient's statement into structured JSON.
-
-You do not diagnose.
-You do not recommend treatment.
-You do not infer information that the patient did not provide.
-
-Return JSON only.
-
-The JSON must have exactly this structure:
-
-{
-  "chief_complaint": string,
-  "symptoms": [
-    {
-      "name": string,
-      "status": "present" | "absent" | "uncertain",
-      "duration": {
-        "value": integer,
-        "unit": "hours" | "days" | "weeks"
-      } | null
-    }
-  ],
-  "medications": {
-    "status": "unknown" | "none" | "reported",
-    "items": []
-  },
-  "allergies": {
-    "status": "unknown" | "none" | "reported",
-    "items": []
-  },
-  "missing_information": []
-}
-
-Rules:
-
-- The chief complaint must be explicitly supported by the patient statement.
-- Do not invent symptoms.
-- Do not invent durations.
-- Do not assign one symptom's duration to another symptom.
-- Negated symptoms must have status "absent".
-- Uncertain symptoms must have status "uncertain".
-- Absent or uncertain symptoms must have duration null.
-
-Medication rules:
-- If medications are not mentioned, use status "unknown".
-- If the patient explicitly reports taking no medication, use status "none".
-- If medications are reported, use status "reported" and list them.
-
-Allergy rules:
-- If allergies are not mentioned, use status "unknown".
-- If the patient explicitly reports no allergies, use status "none".
-- If allergies are reported, use status "reported" and list them.
-
-Missing information rules:
-- Add "duration" when the chief complaint has no reported duration.
-- Add "medications" when medication status is "unknown".
-- Add "allergies" when allergy status is "unknown".
-
-Preserve uncertainty.
-Never convert missing information into negative information.
-""".strip()
 
 
 # ============================================================
@@ -150,15 +103,9 @@ def load_jsonl(path):
     return records
 
 
-def build_messages(record):
-    language = record["language"]
-    utterance = record["utterance"]
-
-    user_prompt = (
-        f"Language: {language}\n\n"
-        f"Patient statement:\n"
-        f"{utterance}"
-    )
+def build_messages(record, system_prompt):
+    # record["user_prompt"] is built locally with prompts.build_user_prompt
+    user_prompt = record["user_prompt"]
 
     target = json.dumps(
         record["target"],
@@ -169,7 +116,7 @@ def build_messages(record):
     return [
         {
             "role": "system",
-            "content": SYSTEM_PROMPT,
+            "content": system_prompt,
         },
         {
             "role": "user",
@@ -191,11 +138,16 @@ def build_messages(record):
     gpu="L4",
     timeout=60 * 60 * 3,
     volumes={
-        REMOTE_DATA_DIR: training_data_volume,
-        "/outputs": model_volume,
+        VOLUME_ROOT: model_volume,
     },
 )
-def train():
+def train(
+    train_records: list[dict],
+    validation_records: list[dict],
+    system_prompt: str,
+    output_dir: str,
+    run_info: dict,
+):
     import torch
 
     from datasets import Dataset
@@ -224,23 +176,13 @@ def train():
     # LOAD DATA
     # --------------------------------------------------------
 
-    train_records = load_jsonl(TRAIN_FILE)
-    validation_records = load_jsonl(VALIDATION_FILE)
+    print(f"Run: {run_info}")
 
     print(f"\nTrain samples:      {len(train_records)}")
     print(f"Validation samples: {len(validation_records)}")
 
-    if len(train_records) != 5589:
-        raise ValueError(
-            f"Expected 5589 training samples, "
-            f"found {len(train_records)}"
-        )
-
-    if len(validation_records) != 699:
-        raise ValueError(
-            f"Expected 699 validation samples, "
-            f"found {len(validation_records)}"
-        )
+    # Sample counts are checked in the local entrypoint (EXPECTED_SAMPLES),
+    # before any GPU time is used.
 
     # --------------------------------------------------------
     # TOKENIZER
@@ -311,7 +253,7 @@ def train():
     # --------------------------------------------------------
 
     def tokenize_record(record):
-        messages = build_messages(record)
+        messages = build_messages(record, system_prompt)
 
         prompt_messages = messages[:-1]
 
@@ -333,6 +275,17 @@ def train():
             prompt_text,
             add_special_tokens=False,
         )["input_ids"]
+
+        untruncated_length = len(tokenizer(
+            full_text,
+            add_special_tokens=False,
+        )["input_ids"])
+
+        if untruncated_length > MAX_LENGTH:
+            raise ValueError(
+                f"Record {record.get('case_id')} has {untruncated_length} tokens "
+                f"(> MAX_LENGTH={MAX_LENGTH}); target tokens would be lost."
+            )
 
         full_tokens = tokenizer(
             full_text,
@@ -427,7 +380,7 @@ def train():
     # --------------------------------------------------------
 
     training_args = TrainingArguments(
-        output_dir=REMOTE_OUTPUT_DIR,
+        output_dir=output_dir,
 
         num_train_epochs=NUM_EPOCHS,
 
@@ -514,7 +467,7 @@ def train():
     # --------------------------------------------------------
 
     final_adapter_dir = (
-        f"{REMOTE_OUTPUT_DIR}/final-adapter"
+        f"{output_dir}/final-adapter"
     )
 
     print(
@@ -535,11 +488,13 @@ def train():
     # --------------------------------------------------------
 
     metrics_file = (
-        f"{REMOTE_OUTPUT_DIR}/training_metrics.json"
+        f"{output_dir}/training_metrics.json"
     )
 
     final_metrics = {
         "base_model": BASE_MODEL,
+        **run_info,
+        "max_length": MAX_LENGTH,
         "train_samples": len(train_records),
         "validation_samples": len(validation_records),
         "epochs": NUM_EPOCHS,
@@ -575,7 +530,61 @@ def train():
 
 @app.local_entrypoint()
 def main():
-    metrics = train.remote()
+    # Local-only imports: the container never needs prompts.py
+    repo_root = Path(__file__).resolve().parents[2]
+    sys.path.insert(0, str(repo_root / "ml"))
+    from prompts import SYSTEM_PROMPTS, build_user_prompt
+
+    data_dir = repo_root / "data" / "processed" / DATA_VERSION
+    if DATA_VERSION == "v2":
+        data_dir = repo_root / "data" / "processed"
+
+    def load_split(name):
+        records = load_jsonl(data_dir / f"{name}_sft.jsonl")
+        for r in records:
+            if r["split"] != name:
+                raise ValueError(f"{r['case_id']} has split {r['split']!r} in {name}_sft.jsonl")
+            r["user_prompt"] = build_user_prompt(r["language"], r["utterance"])
+        return records
+
+    train_records = load_split("train")
+    validation_records = load_split("validation")
+
+    expected = EXPECTED_SAMPLES.get(DATA_VERSION)
+    if expected and (len(train_records), len(validation_records)) != expected:
+        raise ValueError(
+            f"Expected {expected[0]} / {expected[1]} train / validation samples for "
+            f"{DATA_VERSION}, found {len(train_records)} / {len(validation_records)}"
+        )
+
+    overlap = {r["case_id"] for r in train_records} & {r["case_id"] for r in validation_records}
+    if overlap:
+        raise ValueError(f"case_ids in train AND validation: {sorted(overlap)[:5]}")
+
+    folder = "noor-health-qwen3-lora" if RUN_NAME == "lora_v2" else f"noor-health-qwen3-{RUN_NAME}"
+    output_dir = f"{VOLUME_ROOT}/{folder}"
+
+    run_info = {
+        "run_name": RUN_NAME,
+        "data_version": DATA_VERSION,
+        "prompt_version": PROMPT_VERSION,
+    }
+
+    print("=" * 60)
+    print(f"Run name:       {RUN_NAME}")
+    print(f"Data:           {data_dir}")
+    print(f"Prompt version: {PROMPT_VERSION}")
+    print(f"Train / val:    {len(train_records)} / {len(validation_records)}")
+    print(f"Output:         {output_dir} (Modal volume noor-health-models)")
+    print("=" * 60)
+
+    metrics = train.remote(
+        train_records,
+        validation_records,
+        SYSTEM_PROMPTS[PROMPT_VERSION],
+        output_dir,
+        run_info,
+    )
 
     print("\n" + "=" * 60)
     print("TRAINING FINISHED")

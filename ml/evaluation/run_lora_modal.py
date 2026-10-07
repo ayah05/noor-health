@@ -1,4 +1,5 @@
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -52,6 +53,12 @@ EVAL_SETS = {
         "expected_samples": 700,
         "results_dir": "synthetic_test",
     },
+    "synthetic_test_v3": {
+        "dataset": "v3/test_sft.jsonl",
+        "split": "test",
+        "expected_samples": 400,
+        "results_dir": "synthetic_test_v3",
+    },
     "real_test": {
         "dataset": "real_test_sft.jsonl",
         "split": "real_test",
@@ -75,8 +82,37 @@ EVAL_SET = EVAL_SETS[EVAL_SET_NAME]
 
 RUN_NAME = os.environ.get(
     "NOOR_RUN_NAME",
-    "lora_v2",
+    "lora_v3",
 )
+
+# Which adapter, which system prompt (key in ml/prompts.py) and which
+# language-code mapping each run uses. The prompt MUST be the one the
+# adapter was trained with.
+RUNS = {
+    # Reproduces the earlier v2 numbers (evaluated with a prompt that
+    # differed from the training prompt).
+    "lora_v2": {
+        "adapter": "/models/noor-health-qwen3-lora/final-adapter",
+        "prompt": "v2_eval",
+        "language_map": {"ar_eg": "ar_msa"},
+    },
+    # Fair v2 baseline: same adapter, evaluated with its TRAINING prompt.
+    "lora_v2_trainprompt": {
+        "adapter": "/models/noor-health-qwen3-lora/final-adapter",
+        "prompt": "v2",
+        "language_map": {"ar_eg": "ar_msa"},
+    },
+    "lora_v3": {
+        "adapter": "/models/noor-health-qwen3-lora_v3/final-adapter",
+        "prompt": "v3",
+        "language_map": {},
+    },
+}
+
+if RUN_NAME not in RUNS:
+    raise ValueError(f"Unknown NOOR_RUN_NAME {RUN_NAME!r}. Choose one of {sorted(RUNS)}.")
+
+RUN = RUNS[RUN_NAME]
 
 LOCAL_DATASET = (
     ROOT_DIR
@@ -110,68 +146,9 @@ model_volume = modal.Volume.from_name(
 
 MODEL_DIR = "/models/qwen3-0.6b"
 
-ADAPTER_DIR = (
-    "/models/noor-health-qwen3-lora/final-adapter"
-)
+ADAPTER_DIR = RUN["adapter"]
 
 BATCH_SIZE = 32
-
-
-# ============================================================
-# SYSTEM PROMPT
-# ============================================================
-
-SYSTEM_PROMPT = """
-You are Noor Health, a multilingual clinical intake assistant.
-
-Extract structured clinical information from the patient's statement.
-
-You are NOT diagnosing the patient.
-
-Return ONLY valid JSON.
-
-Use exactly this schema:
-
-{
-  "chief_complaint": string,
-  "symptoms": [
-    {
-      "name": string,
-      "status": "present" | "absent" | "uncertain",
-      "duration": {
-        "value": integer,
-        "unit": "hours" | "days" | "weeks"
-      } | null
-    }
-  ],
-  "medications": {
-    "status": "unknown" | "none" | "reported",
-    "items": []
-  },
-  "allergies": {
-    "status": "unknown" | "none" | "reported",
-    "items": []
-  },
-  "missing_information": []
-}
-
-Rules:
-
-- Use English canonical clinical terms.
-- Do not invent information.
-- A symptom not mentioned must not be added.
-- Preserve present, absent and uncertain status.
-- Durations belong only to the symptom they describe.
-- If medication information is not mentioned, use status "unknown".
-- If the patient explicitly takes no medication, use status "none".
-- If allergy information is not mentioned, use status "unknown".
-- If the patient explicitly has no known allergies, use status "none".
-- missing_information may contain only:
-  "duration", "medications", "allergies".
-- If the chief complaint duration is missing, include "duration".
-- If medications are unknown, include "medications".
-- If allergies are unknown, include "allergies".
-""".strip()
 
 
 # ============================================================
@@ -186,6 +163,8 @@ Rules:
 )
 def run_lora(
     test_samples: list[dict],
+    system_prompt: str,
+    adapter_dir: str,
 ):
 
     import torch
@@ -253,12 +232,12 @@ def run_lora(
 
     print(
         f"\nLoading LoRA adapter from:"
-        f"\n{ADAPTER_DIR}"
+        f"\n{adapter_dir}"
     )
 
     model = PeftModel.from_pretrained(
         base_model,
-        ADAPTER_DIR,
+        adapter_dir,
     )
 
     model.eval()
@@ -278,16 +257,12 @@ def run_lora(
         messages = [
             {
                 "role": "system",
-                "content": SYSTEM_PROMPT,
+                "content": system_prompt,
             },
             {
                 "role": "user",
-                "content": (
-                    f"Language: "
-                    f"{sample['language']}\n\n"
-                    f"Patient statement:\n"
-                    f"{sample['utterance']}"
-                ),
+                # built locally with prompts.build_user_prompt
+                "content": sample["user_prompt"],
             },
         ]
 
@@ -385,7 +360,7 @@ def run_lora(
                         sample["split"],
 
                     "language":
-                        sample["language"],
+                        sample.get("language_original") or sample["language"],
 
                     "utterance":
                         sample["utterance"],
@@ -552,8 +527,21 @@ def main():
         "\nStarting LoRA GPU inference..."
     )
 
+    # Local-only import: the container never needs prompts.py
+    sys.path.insert(0, str(ROOT_DIR / "ml"))
+    from prompts import SYSTEM_PROMPTS, build_user_prompt
+
+    for sample in samples:
+        original = sample.get("language_original", sample["language"])
+        prompt_language = RUN["language_map"].get(original, original)
+        sample["user_prompt"] = build_user_prompt(prompt_language, sample["utterance"])
+
+    print(f"Run: {RUN_NAME} | adapter: {RUN['adapter']} | prompt: {RUN['prompt']}")
+
     results = run_lora.remote(
-        samples
+        samples,
+        SYSTEM_PROMPTS[RUN["prompt"]],
+        RUN["adapter"],
     )
 
     # ========================================================
